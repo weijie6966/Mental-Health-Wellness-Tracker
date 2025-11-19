@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mental_Health_Wellness_Tracker.ProfilePictureViewPage"
+             BackgroundColor="Black"
+             Title="Profile Picture">
+
+    <Grid>
+        <!-- Full Screen Image -->
+        <Image x:Name="FullProfileImage"
+               Aspect="AspectFit"
+               HorizontalOptions="FillAndExpand"
+               VerticalOptions="FillAndExpand"/>
+
+        <!-- Optional: Close Button Overlay (if not using nav bar back button) -->
+        <Button Text="Close"
+                Clicked="OnCloseClicked"
+                TextColor="White"
+                BackgroundColor="#80000000"
+                VerticalOptions="Start"
+                HorizontalOptions="End"
+                Margin="20"/>
+    </Grid>
+</ContentPage>

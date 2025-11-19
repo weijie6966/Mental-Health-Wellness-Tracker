@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mental_Health_Wellness_Tracker.AnalyticPage"
+             BackgroundColor="#0B0E23"
+             NavigationPage.HasNavigationBar="False">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="TextOrange">#FF4500</Color>
+            <Color x:Key="ActiveNavColor">#689FBD</Color>
+
+            <!-- Define block colors -->
+            <Color x:Key="Block1Color">#00008B</Color>
+            <Color x:Key="Block2Color">#6495ED</Color>
+            <Color x:Key="Block3Color">#40E0D0</Color>
+            <Color x:Key="Block4Color">#008B8B</Color>
+            <Color x:Key="Block5Color">#8A2BE2</Color>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <!-- Main Layout: Content on top, Nav Bar fixed at bottom -->
+    <Grid RowDefinitions="*, 80">
+
+        <!-- SCROLLABLE CONTENT -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
+
+                <Label Text="ANALYTIC"
+                       FontFamily="BrushFont"
+                       FontSize="35"
+                       TextColor="{StaticResource TextOrange}"
+                       HorizontalOptions="Center"
+                       Margin="0,10,0,20"/>
+
+                <!-- Main Grid for the Analytic Blocks -->
+                <Grid RowDefinitions="120, 180, 120" 
+                      ColumnDefinitions="*,*"
+                      ColumnSpacing="20"
+                      RowSpacing="20"
+                      HorizontalOptions="FillAndExpand">
+
+                    <Border Grid.Row="0" Grid.Column="0" BackgroundColor="{StaticResource Block1Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
+                    <Border Grid.Row="0" Grid.Column="1" BackgroundColor="{StaticResource Block2Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
+                    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="{StaticResource Block3Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
+                    <Border Grid.Row="2" Grid.Column="0" BackgroundColor="{StaticResource Block4Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
+                    <Border Grid.Row="2" Grid.Column="1" BackgroundColor="{StaticResource Block5Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
+
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- BOTTOM NAVIGATION BAR (Button Structure) -->
+        <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+            <Grid ColumnDefinitions="*,*,*,*,*">
+
+                <!-- 1. Community Button -->
+                <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+
+                <!-- 2. List Button -->
+                <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+
+                <!-- 3. Diary Button -->
+                <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+
+                <!-- 4. Stats Button (ACTIVE) -->
+                <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+
+                <!-- 5. Profile Button -->
+                <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

@@ -2,12 +2,12 @@
 {
     public partial class App : Application
     {
-        public App()
+        public App(MainPage mainPage)
         {
             InitializeComponent();
 
             // Wrap MainPage in a NavigationPage so we can push/pop screens
-            MainPage = new NavigationPage(new MainPage());
+            MainPage = new NavigationPage(mainPage);
         }
     }
 }

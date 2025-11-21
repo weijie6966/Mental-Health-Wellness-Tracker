@@ -1,4 +1,5 @@
 ﻿using Mental_Health_Wellness_Tracker;
+using Mental_Health_Wellness_Tracker.Services;
 
 public static class MauiProgram
 {
@@ -13,6 +14,14 @@ public static class MauiProgram
                 // Add your custom brush font here:
                 fonts.AddFont("BrushFont.ttf", "BrushFont");
             });
+
+        // Register AuthService for dependency injection
+        builder.Services.AddSingleton<IAuthService, AuthService>();
+        // Register AssessmentRepository for dependency injection
+        builder.Services.AddSingleton<IAssessmentRepository, AssessmentRepository>();
+        // Register MainPage & App for dependency injection
+        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<App>();
 
         return builder.Build();
     }

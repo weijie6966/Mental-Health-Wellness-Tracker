@@ -73,7 +73,7 @@
                 <VerticalStackLayout Spacing="5">
                     <Label Text="EMAIL" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
                     <Border StrokeShape="RoundRectangle 30" BackgroundColor="{StaticResource InputGray}" HeightRequest="50" StrokeThickness="0">
-                        <Entry Placeholder="" TextColor="Black" Margin="15,0"/>
+                        <Entry x:Name="EntryEmail" Placeholder="" TextColor="Black" Margin="15,0"/>
                     </Border>
                 </VerticalStackLayout>
 

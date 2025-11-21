@@ -1,104 +1,156 @@
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage; // Needed for FilePicker & Preferences
+using Microsoft.Maui.Storage;
 using System;
 using System.Threading.Tasks;
+using Mental_Health_Wellness_Tracker.Services;
+using Mental_Health_Wellness_Tracker.Models; // Need Models for UserProfile
 
 namespace Mental_Health_Wellness_Tracker
 {
     public partial class ProfilePage : ContentPage
     {
+        // Repository injection
+        private readonly IAssessmentRepository _repository;
+        private string _currentUserId;
+
+        // Default constructor (used by App Shell or Navigation sometimes)
         public ProfilePage()
         {
             InitializeComponent();
+            // Service Locator as fallback
+            _repository = IPlatformApplication.Current.Services.GetService<IAssessmentRepository>();
             LoadProfileData();
         }
 
-        // --- 1. Profile Data Loading ---
-        private void LoadProfileData()
+        // Recommended constructor with injection
+        public ProfilePage(IAssessmentRepository repository)
         {
-            // Load text data (Username/Bio) from Preferences
-            EntryUsername.Text = Preferences.Get("UsernameKey", "New User");
-            EditorBio.Text = Preferences.Get("BioKey", "Tell us about yourself.");
+            InitializeComponent();
+            _repository = repository;
+            LoadProfileData();
+        }
 
-            // Load saved image path (if any) and set it to the Image control
-            string savedImagePath = Preferences.Get("ProfileImagePath", string.Empty);
-            if (!string.IsNullOrEmpty(savedImagePath))
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            // Reload data every time the page appears to ensure freshness
+            await LoadProfileData();
+        }
+
+        // --- 1. Profile Data Loading (From Database) ---
+        private async Task LoadProfileData()
+        {
+            // Get current UserID
+            _currentUserId = await SecureStorage.GetAsync("user_id");
+
+            if (string.IsNullOrEmpty(_currentUserId))
             {
-                ImgProfileAvatar.Source = ImageSource.FromFile(savedImagePath);
+                // If not logged in (shouldn't happen here), show defaults
+                EntryUsername.Text = "Guest";
+                EditorBio.Text = "Please log in.";
+                return;
+            }
+
+            // Fetch Profile from Database
+            var profile = await _repository.GetUserProfileAsync(_currentUserId);
+
+            if (profile != null)
+            {
+                EntryUsername.Text = profile.Username;
+                EditorBio.Text = profile.Bio;
+
+                // While loading data, update the local cache to ensure that the name can be retrieved when writing a diary entry.
+                Preferences.Set("UsernameKey", profile.Username);
+
+                // Load image if path exists
+                if (!string.IsNullOrEmpty(profile.ProfileImagePath))
+                {
+                    ImgProfileAvatar.Source = ImageSource.FromFile(profile.ProfileImagePath);
+                }
+            }
+            else
+            {
+                // No profile yet? Set defaults (but don't save yet)
+                EntryUsername.Text = "";
+                EditorBio.Text = "";
             }
         }
 
         // --- 2. Main Button Actions ---
         private async void OnSaveProfileClicked(object sender, EventArgs e)
         {
-            // Save the text fields to persistent storage
-            Preferences.Set("UsernameKey", EntryUsername.Text);
-            Preferences.Set("BioKey", EditorBio.Text);
+            if (string.IsNullOrEmpty(_currentUserId)) return;
 
-            await DisplayAlert("Success", "Profile updated successfully!", "OK");
+            string newUsername = EntryUsername.Text;
+            string newBio = EditorBio.Text;
+
+            // 1. Create or Update Profile Model
+            var profile = new UserProfile
+            {
+                UserId = _currentUserId,
+                Username = newUsername,
+                Bio = newBio,
+                // Keep existing image path if we haven't changed it here (logic simplified)
+                // For now, we rely on the file picker saving to Preferences or we need to track it.
+                // Let's grab the image path from Preferences as a temporary holding spot or track it in a field.
+                ProfileImagePath = Preferences.Get("TempProfileImagePath", "")
+            };
+
+            // 2. Save to Database
+            bool success = await _repository.SaveUserProfileAsync(profile);
+
+            // 3. Also update Preferences for the "UsernameKey" so WriteDiaryPage can find it easily
+            // (This keeps compatibility with your other pages without refactoring everything)
+            Preferences.Set("UsernameKey", newUsername);
+
+            if (success)
+                await DisplayAlert("Success", "Profile updated successfully!", "OK");
+            else
+                await DisplayAlert("Error", "Failed to update profile.", "OK");
         }
 
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
-            // In a real app, clear session tokens here
-            await DisplayAlert("Logout", "You have been logged out.", "OK");
+            // Clear session
+            SecureStorage.Remove("auth_token");
+            SecureStorage.Remove("user_id");
 
-            // Return to the login screen
+            // Optional: Clear username pref so next user doesn't see it briefly
+            Preferences.Remove("UsernameKey");
+
+            await DisplayAlert("Logout", "You have been logged out.", "OK");
             await Navigation.PopToRootAsync();
         }
 
         // --- 3. POPUP MENU LOGIC (Grid Overlay) ---
 
-        // Open the menu when the profile picture is tapped
         private void OnProfileImageTapped(object sender, EventArgs e)
         {
-            // Show the overlay grid defined in XAML
             MenuOverlay.IsVisible = true;
         }
 
-        // Close the menu when tapping the semi-transparent background
         private void OnOverlayTapped(object sender, EventArgs e)
         {
             MenuOverlay.IsVisible = false;
         }
 
-        // Action: View Profile (UPDATED: Shows ONLY the profile picture)
         private async void OnViewProfileClicked(object sender, EventArgs e)
         {
-            MenuOverlay.IsVisible = false; // Close menu first
-
-            // Check if the user has a custom image or is using the default
-            string imageSource = "nav_profile.png"; // Default
-            string savedPath = Preferences.Get("ProfileImagePath", string.Empty);
-
+            MenuOverlay.IsVisible = false;
+            // Logic to view image (omitted for brevity, similar to before)
+            string savedPath = Preferences.Get("TempProfileImagePath", string.Empty);
             if (!string.IsNullOrEmpty(savedPath))
-            {
-                // If using a local file path, we need to display it differently or just confirm it exists
-                // For simplicity in this context, we will show a focused modal or alert.
-                // Since standard alerts can't show images easily, we will navigate to a temporary
-                // "Image View" page or just confirm the action.
-
-                // OPTION A: Simple Alert (Text only - "Viewing Picture")
-                // await DisplayAlert("Profile Picture", "Displaying full-size image...", "Close");
-
-                // OPTION B: (Recommended) Navigate to a dedicated page to view the image
                 await Navigation.PushAsync(new ProfilePictureViewPage(savedPath));
-            }
             else
-            {
-                // Default image logic
                 await Navigation.PushAsync(new ProfilePictureViewPage("nav_profile.png"));
-            }
         }
 
-        // Action: Change Profile (File Picker Logic)
         private async void OnChangeProfileClicked(object sender, EventArgs e)
         {
-            MenuOverlay.IsVisible = false; // Close menu first
+            MenuOverlay.IsVisible = false;
 
             try
             {
-                // Open the device's photo picker
                 var result = await FilePicker.Default.PickAsync(new PickOptions
                 {
                     PickerTitle = "Select a profile picture",
@@ -107,16 +159,14 @@ namespace Mental_Health_Wellness_Tracker
 
                 if (result != null)
                 {
-                    // Update the UI immediately with the new image
                     ImgProfileAvatar.Source = ImageSource.FromFile(result.FullPath);
-
-                    // Save the path to Preferences so it loads next time
-                    Preferences.Set("ProfileImagePath", result.FullPath);
+                    // Save temporarily to Prefs so SaveProfileClicked can grab it
+                    Preferences.Set("TempProfileImagePath", result.FullPath);
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", "Could not pick image. Permissions might be denied.", "OK");
+                await DisplayAlert("Error", "Could not pick image.", "OK");
             }
         }
 
@@ -125,24 +175,10 @@ namespace Mental_Health_Wellness_Tracker
         {
             string destination = ((Button)sender).AutomationId;
 
-            // Standard navigation routing
-            if (destination == "Community")
-            {
-                await Navigation.PushAsync(new CommunityPage());
-            }
-            else if (destination == "List")
-            {
-                await Navigation.PushAsync(new AssessmentPage());
-            }
-            else if (destination == "Diary")
-            {
-                await Navigation.PushAsync(new WriteDiaryPage());
-            }
-            else if (destination == "Stats")
-            {
-                await Navigation.PushAsync(new AnalyticPage());
-            }
-            // No need for "Profile" logic since we are already on this page.
+            if (destination == "Community") await Navigation.PushAsync(new CommunityPage(_repository));
+            else if (destination == "List") await Navigation.PushAsync(new AssessmentPage(_repository));
+            else if (destination == "Diary") await Navigation.PushAsync(new WriteDiaryPage());
+            else if (destination == "Stats") await Navigation.PushAsync(new AnalyticPage(_repository));
         }
     }
 }

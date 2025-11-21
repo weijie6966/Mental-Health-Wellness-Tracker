@@ -1,25 +1,27 @@
-using Microsoft.Maui.Controls;
+﻿using Microsoft.Maui.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Mental_Health_Wellness_Tracker.Services;
+using Mental_Health_Wellness_Tracker.Models;
+using Microsoft.Maui.Storage;
 
 namespace Mental_Health_Wellness_Tracker
 {
-    // 1. COMMENT MODEL (New class for individual comments)
+    // 1. COMMENT MODEL
     public class PostComment
     {
         public string Username { get; set; }
         public string Text { get; set; }
     }
 
-    // 2. POST MODEL (Updated to support your XAML bindings)
+    // 2. POST MODEL
     public class Post : INotifyPropertyChanged
     {
         public string Username { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string MoodEmoji { get; set; } = "emoji_neutral.png";
 
-        // -- LIKES --
         private int _likes;
         public int Likes
         {
@@ -30,14 +32,12 @@ namespace Mental_Health_Wellness_Tracker
                 {
                     _likes = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(LikesText)); // Update the text when number changes
+                    OnPropertyChanged(nameof(LikesText));
                 }
             }
         }
-        // Returns "5 Likes" or "1 Like"
         public string LikesText => $"{Likes} Like{(Likes == 1 ? "" : "s")}";
 
-        // -- COMMENTS COUNT --
         private int _commentsCount;
         public int Comments
         {
@@ -48,14 +48,12 @@ namespace Mental_Health_Wellness_Tracker
                 {
                     _commentsCount = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(CommentsText)); // Update the text when number changes
+                    OnPropertyChanged(nameof(CommentsText));
                 }
             }
         }
-        // Returns "3 Comments"
         public string CommentsText => $"{Comments} Comment{(Comments == 1 ? "" : "s")}";
 
-        // -- COMMENTS VISIBILITY --
         private bool _isCommentsVisible;
         public bool IsCommentsVisible
         {
@@ -70,7 +68,6 @@ namespace Mental_Health_Wellness_Tracker
             }
         }
 
-        // -- LIST OF COMMENTS --
         public ObservableCollection<PostComment> CommentsList { get; set; } = new ObservableCollection<PostComment>();
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -84,12 +81,12 @@ namespace Mental_Health_Wellness_Tracker
     public partial class CommunityPage : ContentPage, INotifyPropertyChanged
     {
         public ObservableCollection<Post> Posts { get; set; }
-
-        // Track which post the user is currently trying to comment on
         private Post _activePostForComment;
-
-        // Property to show/hide the bottom input bar (referenced in XAML Row 1)
         private bool _isInputVisible;
+
+        // Database repository
+        private readonly IAssessmentRepository _repository;
+
         public bool IsInputVisible
         {
             get => _isInputVisible;
@@ -100,88 +97,124 @@ namespace Mental_Health_Wellness_Tracker
             }
         }
 
-        public CommunityPage(Post newEntry = null)
+        public CommunityPage(IAssessmentRepository repository)
         {
             InitializeComponent();
-            BindingContext = this; // Important! Allows the Page to bind to IsInputVisible
+            BindingContext = this;
 
-            // Initialize Sample Data with Comments
-            Posts = new ObservableCollection<Post>
-            {
-                new Post
-                {
-                    Username = "SarahM",
-                    Content = "Feeling much better today after my morning walk!",
-                    MoodEmoji = "emoji_love.png",
-                    Likes = 5,
-                    Comments = 1,
-                    CommentsList = new ObservableCollection<PostComment>
-                    {
-                        new PostComment { Username = "JohnD", Text = "Great job! Keep it up." }
-                    }
-                },
-                new Post
-                {
-                    Username = "Mike22",
-                    Content = "Anxiety is high today. Breathing exercises aren't working.",
-                    MoodEmoji = "emoji_sad.png",
-                    Likes = 2,
-                    Comments = 0
-                }
-            };
+            // Assigning values ​​to fields
+            _repository = repository;
 
-            if (newEntry != null) Posts.Insert(0, newEntry);
+            // Initialize collection
+            Posts = new ObservableCollection<Post>();
             PostsCollection.ItemsSource = Posts;
         }
 
-        // --- FIX FOR THE ERROR: VIEW COMMENTS CLICKED ---
+        // Reload data whenever the page appears
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await LoadPosts();
+        }
+
+        private async System.Threading.Tasks.Task LoadPosts()
+        {
+            if (_repository == null) 
+                return; // Security check
+
+            Posts.Clear();
+
+            var cloudDiaries = await _repository.GetAllDiaryEntriesFromCloudAsync();
+
+            if (cloudDiaries.Count > 0)
+            {
+                // If internet connection is available and diaries are retrieved from the cloud, use them.
+                foreach (var diary in cloudDiaries)
+                {
+                    Posts.Add(new Post
+                    {
+                        Username = string.IsNullOrEmpty(diary.Username) ? "Unknown" : diary.Username,
+                        Content = diary.Content,
+                        MoodEmoji = diary.MoodEmoji,
+                        Likes = 0,
+                        Comments = 0
+                    });
+                }
+            }
+            else
+            {
+                // If there is no internet connection or the retrieval fails, load your local logs (fallback solution).
+                string userId = await SecureStorage.GetAsync("user_id") ?? "unknown_user";
+                string myName = Preferences.Get("UsernameKey", "Me");
+                var localDiaries = await _repository.GetDiaryEntriesAsync(userId);
+
+                foreach (var diary in localDiaries)
+                {
+                    Posts.Add(new Post { Username = myName, Content = diary.Content, MoodEmoji = diary.MoodEmoji });
+                }
+            }
+
+            // Add dummy data
+            Posts.Add(new Post
+            {
+                Username = "SarahM",
+                Content = "Feeling much better today after my morning walk!",
+                MoodEmoji = "emoji_love.png",
+                Likes = 5,
+                Comments = 1,
+                CommentsList = new ObservableCollection<PostComment>
+                {
+                    new PostComment { Username = "JohnD", Text = "Great job! Keep it up." }
+                }
+            });
+
+            Posts.Add(new Post
+            {
+                Username = "Mike22",
+                Content = "Anxiety is high today. Breathing exercises aren't working.",
+                MoodEmoji = "emoji_sad.png",
+                Likes = 2,
+                Comments = 0
+            });
+        }
+
+        // --- UI Interaction Logic ---
         private void OnCommentViewClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
             var selectedPost = button?.BindingContext as Post;
-
             if (selectedPost == null) return;
 
-            // Toggle the visibility of the comments list inside the card
             selectedPost.IsCommentsVisible = !selectedPost.IsCommentsVisible;
 
-            // Handle the Shared Input Bar at the bottom
             if (selectedPost.IsCommentsVisible)
             {
                 _activePostForComment = selectedPost;
-                IsInputVisible = true; // Show the input bar
-                EntryCommentText.Focus(); // Focus the cursor
+                IsInputVisible = true;
+                EntryCommentText.Focus();
             }
             else
             {
                 _activePostForComment = null;
-                IsInputVisible = false; // Hide the input bar
+                IsInputVisible = false;
                 EntryCommentText.Unfocus();
             }
         }
 
-        // --- SEND COMMENT LOGIC ---
         private void OnCommentSendClicked(object sender, EventArgs e)
         {
             string text = EntryCommentText.Text;
-
             if (string.IsNullOrWhiteSpace(text) || _activePostForComment == null) return;
 
-            // Add the new comment to the active post
             _activePostForComment.CommentsList.Add(new PostComment
             {
-                Username = "Me", // You can replace this with the logged-in user's name
+                Username = "Me",
                 Text = text
             });
-
-            // Update the counters
             _activePostForComment.Comments++;
-
-            // Clear the input
             EntryCommentText.Text = string.Empty;
         }
 
-        // --- LIKE LOGIC ---
         private void OnLikeClicked(object sender, EventArgs e)
         {
             if (sender is Button button && button.CommandParameter is Post post)
@@ -190,18 +223,31 @@ namespace Mental_Health_Wellness_Tracker
             }
         }
 
-        // --- NAVIGATION LOGIC ---
+        // Navigation logic
         private async void OnNavTapped(object sender, EventArgs e)
         {
             string destination = ((Button)sender).AutomationId;
-
-            // Prevent navigating to the page we are already on
             if (destination == "Community") return;
 
-            if (destination == "List") await Navigation.PushAsync(new AssessmentPage());
-            else if (destination == "Diary") await Navigation.PushAsync(new WriteDiaryPage());
-            else if (destination == "Stats") await Navigation.PushAsync(new AnalyticPage());
-            else if (destination == "Profile") await Navigation.PushAsync(new ProfilePage());
+            // Retrieve the currently held repo and pass it to other pages.
+            if (destination == "List")
+            {
+                await Navigation.PushAsync(new AssessmentPage(_repository));
+            }
+            else if (destination == "Diary")
+            {
+                // WriteDiaryPage needs to be obtained using ServiceLocator because it doesn't yet have constructor injection (or we can modify it).
+                // Let's keep it simple and let WriteDiaryPage handle it itself.
+                await Navigation.PushAsync(new WriteDiaryPage());
+            }
+            else if (destination == "Stats")
+            {
+                await Navigation.PushAsync(new AnalyticPage(_repository));
+            }
+            else if (destination == "Profile")
+            {
+                await Navigation.PushAsync(new ProfilePage());
+            }
         }
     }
 }

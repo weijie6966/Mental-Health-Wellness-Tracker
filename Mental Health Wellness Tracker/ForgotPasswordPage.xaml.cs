@@ -1,72 +1,43 @@
 using Microsoft.Maui.Controls;
 using System;
+using Mental_Health_Wellness_Tracker.Services;
 
 namespace Mental_Health_Wellness_Tracker
 {
     public partial class ForgotPasswordPage : ContentPage
     {
-        // State trackers for the two password fields
-        private bool _isNewPasswordVisible = false;
-        private bool _isConfirmPasswordVisible = false;
+        private readonly IAuthService _authService;
 
-        public ForgotPasswordPage()
+        public ForgotPasswordPage(IAuthService authService)
         {
             InitializeComponent();
+            _authService = authService;
         }
 
-        // Logic for New Password Eye Icon
-        private void OnToggleNewPasswordClicked(object sender, EventArgs e)
+        private async void OnSendResetLinkClicked(object sender, EventArgs e)
         {
-            _isNewPasswordVisible = !_isNewPasswordVisible;
-            EntryNewPassword.IsPassword = !_isNewPasswordVisible;
+            string email = EntryEmail.Text;
 
-            if (_isNewPasswordVisible)
-                BtnToggleNewPassword.Source = "eye_closed.png";
-            else
-                BtnToggleNewPassword.Source = "eye_open.png";
-        }
-
-        // Logic for Confirm Password Eye Icon
-        private void OnToggleConfirmPasswordClicked(object sender, EventArgs e)
-        {
-            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-            EntryConfirmPassword.IsPassword = !_isConfirmPasswordVisible;
-
-            if (_isConfirmPasswordVisible)
-                BtnToggleConfirmPassword.Source = "eye_closed.png";
-            else
-                BtnToggleConfirmPassword.Source = "eye_open.png";
-        }
-
-        // Logic for the SEND Verification Code button
-        private async void OnSendVerificationClicked(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(EntryEmail.Text))
+            if (string.IsNullOrWhiteSpace(email))
             {
-                await DisplayAlert("Error", "Please enter your email address first.", "OK");
+                await DisplayAlert("Error", "Please enter your email address.", "OK");
                 return;
             }
 
-            // In a real app, this is where you would call an API service 
-            // to send a verification code to EntryEmail.Text
-            await DisplayAlert("Sent", $"Verification code sent to {EntryEmail.Text}", "OK");
-        }
-
-        // Logic for the final password reset (You would call this on a Reset button)
-        private async void OnResetPasswordClicked(object sender, EventArgs e)
-        {
-            // Add robust validation here (code match, password match, etc.)
-            if (EntryNewPassword.Text != EntryConfirmPassword.Text)
+            try
             {
-                await DisplayAlert("Error", "New passwords do not match.", "OK");
-                return;
+                // Call the Service to send emails
+                await _authService.SendPasswordResetEmailAsync(email);
+
+                await DisplayAlert("Check your email", $"We have sent a password reset link to {email}.", "OK");
+
+                // Return to login page
+                await Navigation.PopAsync();
             }
-
-            // If validation passes, call API to reset password
-            await DisplayAlert("Success", "Your password has been reset!", "OK");
-
-            // Navigate back to the Login page (PopToRootAsync is safest here)
-            await Navigation.PopToRootAsync();
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", ex.Message, "OK");
+            }
         }
 
         // Logic for the BACK button

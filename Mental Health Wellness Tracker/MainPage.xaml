@@ -61,9 +61,10 @@
                             BackgroundColor="{StaticResource InputGray}"
                             HeightRequest="50"
                             StrokeThickness="0">
-                        <Entry Placeholder="" 
-                               TextColor="Black"
-                               Margin="15,0"/>
+                        <Entry x:Name="EntryEmail"
+                            Placeholder="" 
+                            TextColor="Black"
+                            Margin="15,0"/>
                     </Border>
                 </VerticalStackLayout>
 

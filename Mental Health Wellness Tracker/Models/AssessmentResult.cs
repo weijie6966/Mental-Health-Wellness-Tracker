@@ -16,6 +16,10 @@ namespace Mental_Health_Wellness_Tracker.Models
         // Document IDs on Firebase (used for synchronization identification)
         public string FirestoreId { get; set; }
 
+        // Username and email of the user who took the assessment
+        public string Username { get; set; }
+        public string UserEmail { get; set; }
+
         // User ID to link the result to a specific user
         public string UserId { get; set; }
 

@@ -1,4 +1,6 @@
-﻿namespace Mental_Health_Wellness_Tracker
+﻿using Mental_Health_Wellness_Tracker.Services;
+
+namespace Mental_Health_Wellness_Tracker
 {
     public partial class App : Application
     {

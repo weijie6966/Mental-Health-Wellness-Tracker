@@ -12,12 +12,15 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Diagnostics;
 using System.Text.Json;
+using Google.Cloud.Firestore;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Mental_Health_Wellness_Tracker.Services
 {
     public class AssessmentRepository : IAssessmentRepository
     {
         private SQLiteAsyncConnection _database;
+        private FirestoreDb _firestoreDb;
 
         // Your Database Project ID
         private const string ProjectId = "mental-health-wellness-tracker";
@@ -48,12 +51,152 @@ namespace Mental_Health_Wellness_Tracker.Services
             await _database.CreateTableAsync<DiaryEntry>();
             // Create UserProfile table for user profiles
             await _database.CreateTableAsync<UserProfile>();
+            // Create LocalDiaryEntry table for local diary storage
+            await _database.CreateTableAsync<LocalDiaryEntry>();
 
             // Data Seeding: If the question bank is empty, we automatically fill it with default questions.
             if (await _database.Table<AssessmentQuestion>().CountAsync() == 0)
             {
                 await SeedQuestionsAsync();
             }
+
+            // Initialize Firestore SDK
+            try
+            {
+                _firestoreDb = FirestoreDb.Create(ProjectId);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Firestore Initialization Warning: {ex.Message}");
+            }
+        }
+
+        // Diary core functions
+        // 核心功能：添加日记 (离线优先 + REST API 上传)
+        public async Task AddDiaryEntryAsync(LocalDiaryEntry localEntry)
+        {
+            await InitAsync();
+
+            // 1. D步骤: 先保存到本地 SQLite (离线保护)
+            // 无论有没有网，先存下来，保证数据不丢
+            localEntry.IsSynced = false;
+            await _database.InsertAsync(localEntry);
+
+            // 2. 检查网络
+            // 如果没网，或者没有 Token，就到此为止 (只存本地)
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return;
+
+            var token = await SecureStorage.GetAsync("auth_token");
+            if (string.IsNullOrEmpty(token))
+                return;
+
+            try
+            {
+                // Image upload logic
+                // If there is a local image path, and the cloud link has not yet been generated
+                if (!string.IsNullOrEmpty(localEntry.LocalImagePath) && string.IsNullOrEmpty(localEntry.ImgUrl))
+                {
+                    if (File.Exists(localEntry.LocalImagePath))
+                    {
+                        // Read file stream
+                        using var stream = File.OpenRead(localEntry.LocalImagePath);
+                        var fileName = $"{Guid.NewGuid()}.jpg"; // Generate unique filenames
+
+                        // Call Storage Service
+                        var storageService = new FirebaseStorageService();
+                        var downloadUrl = await storageService.UploadImageAsync(stream, fileName, token);
+
+                        if (!string.IsNullOrEmpty(downloadUrl))
+                        {
+                            // Upload successful, cloud link obtained
+                            localEntry.ImgUrl = downloadUrl;
+                            // Update the local database (save the cloud link into it)
+                            await _database.UpdateAsync(localEntry);
+                        }
+                    }
+                }
+                // 3. 准备 REST API 请求
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // Firestore REST API 创建文档的 URL
+                string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries?key={WebApiKey}";
+
+                // 4. A步骤: 构建数据包 (Payload)
+                // Firestore REST API 要求特殊的 JSON 格式: { "fields": { "key": { "type": "value" } } }
+                var firestorePayload = new
+                {
+                    fields = new
+                    {
+                        // 字符串类型用 stringValue
+                        userId = new { stringValue = localEntry.UserId },
+                        userEmail = new { stringValue = localEntry.UserEmail ?? "" }, // 防止 null
+                        username = new { stringValue = localEntry.Username ?? "Anonymous" },
+                        content = new { stringValue = localEntry.Content },
+
+                        // 心情数据
+                        moodName = new { stringValue = localEntry.MoodName },
+                        moodEmoji = new { stringValue = localEntry.MoodEmoji },
+
+                        // 注意：整数在 Firestore REST API 中必须转为字符串传给 integerValue
+                        moodScore = new { integerValue = localEntry.MoodScore.ToString() },
+
+                        // This will now send the actual cloud link (if the upload was successful)
+                        imgUrl = new { stringValue = localEntry.ImgUrl ?? "" },
+
+                        // 时间戳使用 timestampValue (ISO 8601 格式)
+                        dateCreated = new { timestampValue = localEntry.DateCreated.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                    }
+                };
+
+                // 序列化 JSON
+                var jsonContent = JsonSerializer.Serialize(firestorePayload);
+                var httpContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+                // 5. C步骤: 发送 POST 请求上传云端
+                var response = await client.PostAsync(url, httpContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // 6. B步骤: 上传成功，更新本地状态
+
+                    // 解析响应以获取 Firestore 生成的 ID
+                    // 响应中包含 "name": "projects/.../documents/diary_entries/文档ID"
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(responseBody);
+                    if (doc.RootElement.TryGetProperty("name", out var nameElement))
+                    {
+                        var path = nameElement.GetString();
+                        // 截取最后一部分作为 ID
+                        var firestoreId = path.Split('/').Last();
+                        localEntry.FirestoreId = firestoreId;
+                    }
+
+                    localEntry.IsSynced = true;
+                    await _database.UpdateAsync(localEntry);
+
+                    Debug.WriteLine($"Diary synced successfully! ID: {localEntry.FirestoreId}");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"Diary Sync Failed: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Diary Sync Exception: {ex.Message}");
+            }
+        }
+
+        public async Task<List<LocalDiaryEntry>> GetLocalDiaryEntriesAsync(string userId)
+        {
+            await InitAsync();
+            return await _database.Table<LocalDiaryEntry>()
+                .Where(d => d.UserId == userId)
+                .OrderByDescending(d => d.DateCreated)
+                .ToListAsync();
         }
 
         // Get the question
@@ -139,6 +282,9 @@ namespace Mental_Health_Wellness_Tracker.Services
                         fields = new
                         {
                             userId = new { stringValue = item.UserId },
+                            userEmail = new { stringValue = item.UserEmail ?? "" },
+                            username = new { stringValue = item.Username ?? "Anonymous" },
+                            q_answer = new { stringValue = item.AnswersJson?? "[]" },
                             testType = new { stringValue = item.TestType },
                             totalScore = new { integerValue = item.TotalScore.ToString() }, // Firestore expects integerValue as string
                             calculatedResult = new { stringValue = item.CalculatedResult },
@@ -168,30 +314,122 @@ namespace Mental_Health_Wellness_Tracker.Services
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Sync Exception: {ex.Message}");
+                    Debug.WriteLine($"Assessment Sync Exception: {ex.Message}");
                 }
             }
         }
 
-        // Diary Entry Methods
-        public async Task<bool> SaveDiaryEntryAsync(DiaryEntry entry)
+        // ✅ 核心新功能：从云端下载历史记录
+        public async Task SyncAssessmentFromCloudAsync(string userId)
         {
-            await InitAsync();
+            // 1. 检查网络和 Token
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet) return;
+            var token = await SecureStorage.GetAsync("auth_token");
+            if (string.IsNullOrEmpty(token)) return;
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // 2. 请求 Firestore 获取 assessments 集合中的所有文档
+            string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/assessments?key={WebApiKey}";
+
             try
             {
-                entry.IsSynced = false; // Marked as not synchronized
-                await _database.InsertAsync(entry);
+                var response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"Download Error: {response.StatusCode}");
+                    return;
+                }
 
-                // Try background synchronization
-                _ = SyncPendingDiaryEntriesAsync();
-                return true;
+                var jsonString = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(jsonString);
+
+                // 3. 解析返回的文档列表
+                if (doc.RootElement.TryGetProperty("documents", out JsonElement documents))
+                {
+                    await InitAsync(); // 确保本地数据库已就绪
+
+                    foreach (var docElement in documents.EnumerateArray())
+                    {
+                        // 3.1 获取文档 ID (FirestoreId)
+                        // path 格式: "projects/.../databases/(default)/documents/assessments/DOCUMENT_ID"
+                        string path = docElement.GetProperty("name").GetString();
+                        string firestoreId = path.Split('/').Last();
+
+                        // 3.2 解析字段
+                        var fields = docElement.GetProperty("fields");
+
+                        // 辅助函数：安全读取 Firestore 字符串字段
+                        string GetStr(string key) =>
+                            fields.TryGetProperty(key, out var f) && f.TryGetProperty("stringValue", out var v) ? v.GetString() : "";
+
+                        // 辅助函数：安全读取 Firestore 整数字段
+                        int GetInt(string key) =>
+                            fields.TryGetProperty(key, out var f) && f.TryGetProperty("integerValue", out var v) && int.TryParse(v.GetString(), out int i) ? i : 0;
+
+                        // 检查这条记录是否属于当前用户
+                        string recordUserId = GetStr("userId");
+                        if (recordUserId != userId) continue; // 不是我的数据，跳过
+
+                        // 3.3 检查本地是否已经存在 (防止重复添加)
+                        var existing = await _database.Table<AssessmentResult>()
+                                                      .Where(x => x.FirestoreId == firestoreId)
+                                                      .FirstOrDefaultAsync();
+                        if (existing != null) continue; // 本地已有，跳过
+
+                        // 3.4 解析日期
+                        DateTime dateTaken = DateTime.Now;
+                        if (fields.TryGetProperty("dateTaken", out var dtField) && dtField.TryGetProperty("timestampValue", out var ts))
+                        {
+                            DateTime.TryParse(ts.GetString(), out dateTaken);
+                        }
+
+                        // 3.5 创建本地对象并保存
+                        var newLocalResult = new AssessmentResult
+                        {
+                            FirestoreId = firestoreId,
+                            UserId = recordUserId,
+                            UserEmail = GetStr("userEmail"),
+                            Username = GetStr("username"),
+                            TestType = GetStr("testType"),
+                            TotalScore = GetInt("totalScore"),
+                            CalculatedResult = GetStr("calculatedResult"),
+                            AnswersJson = GetStr("q_answer"), // 直接把 JSON 字符串存下来
+                            DateTaken = dateTaken,
+                            IsSynced = true // 既然是从云端下载的，肯定已同步
+                        };
+
+                        await _database.InsertAsync(newLocalResult);
+                        Debug.WriteLine($"Downloaded assessment: {firestoreId}");
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Diary Save Error: {ex.Message}");
-                return false;
+                Debug.WriteLine($"Sync Download Exception: {ex.Message}");
             }
         }
+
+        // Diary Entry Methods
+        //public async Task<bool> SaveDiaryEntryAsync(DiaryEntry entry)
+        //{
+        //    await InitAsync();
+        //    try
+        //    {
+        //        entry.IsSynced = false; // Marked as not synchronized
+        //        await _database.InsertAsync(entry);
+
+        //        // Try background synchronization
+        //        _ = SyncPendingDiaryEntriesAsync();
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine($"Diary Save Error: {ex.Message}");
+        //        return false;
+        //    }
+        //}
 
         // Sync pending diary entries to remote server
         // Get Diary List
@@ -206,71 +444,71 @@ namespace Mental_Health_Wellness_Tracker.Services
 
         // Sync pending diary entries to remote server
         // Sync logs to Firebase Firestore
-        public async Task SyncPendingDiaryEntriesAsync()
-        {
-            await InitAsync();
+        //public async Task SyncPendingDiaryEntriesAsync()
+        //{
+        //    await InitAsync();
 
-            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
-                return; // No internet access, exit early
+        //    if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        //        return; // No internet access, exit early
 
-            // Retrieve all diary entries where IsSynced = false
-            // Get all unsynced diary entries
-            var unsyncedDiaries = await _database.Table<DiaryEntry>()
-                .Where(x => x.IsSynced == false)
-                .ToListAsync();
+        //    // Retrieve all diary entries where IsSynced = false
+        //    // Get all unsynced diary entries
+        //    var unsyncedDiaries = await _database.Table<DiaryEntry>()
+        //        .Where(x => x.IsSynced == false)
+        //        .ToListAsync();
 
-            if (unsyncedDiaries.Count == 0)
-                return; // No items to sync
+        //    if (unsyncedDiaries.Count == 0)
+        //        return; // No items to sync
 
-            var token = await SecureStorage.GetAsync("auth_token");
-            if (string.IsNullOrEmpty(token))
-                return; // No auth token, cannot sync
+        //    var token = await SecureStorage.GetAsync("auth_token");
+        //    if (string.IsNullOrEmpty(token))
+        //        return; // No auth token, cannot sync
 
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //    using var client = new HttpClient();
+        //    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // Note: Here we will store the diary entries in a new collection 'diary_entries'
-            string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries?key={WebApiKey}";
+        //    // Note: Here we will store the diary entries in a new collection 'diary_entries'
+        //    string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries?key={WebApiKey}";
 
-            foreach (var item in unsyncedDiaries)
-            {
-                try
-                {
-                    var firestorePayload = new
-                    {
-                        fields = new
-                        {
-                            userId = new { stringValue = item.UserId },
-                            username = new { stringValue = item.Username ?? "Anonymous" },
-                            content = new { stringValue = item.Content },
-                            moodEmoji = new { stringValue = item.MoodEmoji },
-                            dateCreated = new { timestampValue = item.DateCreated.ToString("yyyy-MM-ddTHH:mm:ssZ") }
-                        }
-                    };
+        //    foreach (var item in unsyncedDiaries)
+        //    {
+        //        try
+        //        {
+        //            var firestorePayload = new
+        //            {
+        //                fields = new
+        //                {
+        //                    userId = new { stringValue = item.UserId },
+        //                    username = new { stringValue = item.Username ?? "Anonymous" },
+        //                    content = new { stringValue = item.Content },
+        //                    moodEmoji = new { stringValue = item.MoodEmoji },
+        //                    dateCreated = new { timestampValue = item.DateCreated.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+        //                }
+        //            };
 
-                    var jsonContent = JsonSerializer.Serialize(firestorePayload);
-                    var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+        //            var jsonContent = JsonSerializer.Serialize(firestorePayload);
+        //            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
-                    var response = await client.PostAsync(url, content);
+        //            var response = await client.PostAsync(url, content);
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        item.IsSynced = true;
-                        await _database.UpdateAsync(item);
-                        Debug.WriteLine($"Synced Diary {item.Id} successfully!");
-                    }
-                    else
-                    {
-                        var error = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine($"Diary Sync Failed: {error}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Diary Sync Exception: {ex.Message}");
-                }
-            }
-        }
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                item.IsSynced = true;
+        //                await _database.UpdateAsync(item);
+        //                Debug.WriteLine($"Synced Diary {item.Id} successfully!");
+        //            }
+        //            else
+        //            {
+        //                var error = await response.Content.ReadAsStringAsync();
+        //                Debug.WriteLine($"Diary Sync Failed: {error}");
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Debug.WriteLine($"Diary Sync Exception: {ex.Message}");
+        //        }
+        //    }
+        //}
 
         // Retrieve everyone's diaries from the cloud (for the community page).
         public async Task<List<DiaryEntry>> GetAllDiaryEntriesFromCloudAsync()

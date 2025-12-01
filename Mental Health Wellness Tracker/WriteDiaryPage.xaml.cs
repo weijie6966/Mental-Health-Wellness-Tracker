@@ -2,27 +2,26 @@
 using Microsoft.Maui.Storage;
 using System;
 using System.Threading.Tasks;
-using Mental_Health_Wellness_Tracker.Services; // Import Services
-using Mental_Health_Wellness_Tracker.Models;   // Import Models
+using Mental_Health_Wellness_Tracker.Services;
+using Mental_Health_Wellness_Tracker.Models;
 
 namespace Mental_Health_Wellness_Tracker
 {
     public partial class WriteDiaryPage : ContentPage
     {
-        private string _selectedMoodEmoji = "emoji_neutral.png";    // Default mood
-        private readonly IAssessmentRepository _repository;         // Data repository
+        private string _selectedMoodEmoji = "emoji_neutral.png";
+        private readonly IAssessmentRepository _repository;
+        // Used to temporarily store the image path selected by the user
+        private string _selectedImagePath = string.Empty;
 
         public WriteDiaryPage()
         {
             InitializeComponent();
-
-            // Manually obtain the repository from the system service
             _repository = IPlatformApplication.Current.Services.GetService<IAssessmentRepository>();
-
             HighlightSelectedMoodEmoji();
         }
 
-        // --- Mood Selection Logic ---
+        // --- 心情选择逻辑 ---
         private void OnMoodEmojiClicked(object sender, EventArgs e)
         {
             if (sender is ImageButton button && button.CommandParameter is string emojiFileName)
@@ -51,81 +50,101 @@ namespace Mental_Health_Wellness_Tracker
         {
             try
             {
-                var result = await FilePicker.Default.PickAsync(new PickOptions
-                {
-                    PickerTitle = "Select a photo",
-                    FileTypes = FilePickerFileType.Images
+                var result = await FilePicker.Default.PickAsync(new PickOptions 
+                { 
+                    PickerTitle = "Select a photo", 
+                    FileTypes = FilePickerFileType.Images 
                 });
 
-                if (result != null) LblFileName.Text = result.FileName;
+                if (result != null)
+                {
+                    LblFileName.Text = result.FileName;
+                    // Save local path to variable
+                    _selectedImagePath = result.FullPath;
+                }
             }
-            catch (Exception ex) { }
+            catch (Exception ex) 
+            {
+                // Ignore cancellation or error
+            }
         }
 
-        // Logic for "Post to Community" button
+        // --- 核心发布逻辑 ---
         private async void OnPostClicked(object sender, EventArgs e)
         {
             string diaryText = TxtDiaryEntry.Text;
 
-            if (string.IsNullOrWhiteSpace(diaryText))
+            if (string.IsNullOrWhiteSpace(diaryText) && string.IsNullOrEmpty(_selectedImagePath))
             {
                 await DisplayAlert("Hold On", "Please write your diary entry before posting.", "OK");
                 return;
             }
 
-            // Get current user ID
-            string userId = await SecureStorage.GetAsync("user_id") ?? "unknown_user";
+            var userId = await SecureStorage.GetAsync("user_id");
+            var userEmail = await SecureStorage.GetAsync("user_email");
+            var username = Preferences.Get("UsernameKey", "User");
 
-            var newEntry = new DiaryEntry
+            if (string.IsNullOrEmpty(userId))
+            {
+                await DisplayAlert("Error", "You are not logged in!", "OK");
+                return;
+            }
+
+            // 获取心情详情
+            (string moodName, int moodScore) = GetMoodDetails(_selectedMoodEmoji);
+
+            // ✅ 创建 LocalDiaryEntry (本地模型)
+            var newEntry = new LocalDiaryEntry
             {
                 UserId = userId,
-                Username = Preferences.Get("UsernameKey", "New User"),
+                UserEmail = userEmail,
+                Username = username,
                 Content = diaryText,
+
                 MoodEmoji = _selectedMoodEmoji,
+                MoodName = moodName,
+                MoodScore = moodScore,
+
+                ImgUrl = "", // The initial cloud connection is empty
+                LocalImagePath = _selectedImagePath,
                 DateCreated = DateTime.Now,
                 IsSynced = false
             };
 
-            // Save to database
-            bool isSaved = await _repository.SaveDiaryEntryAsync(newEntry);
+            // ✅ 调用 AddDiaryEntryAsync
+            await _repository.AddDiaryEntryAsync(newEntry);
 
-            if (isSaved)
-            {
-                await DisplayAlert("Success", "Diary saved to your private journal!", "OK");
+            await DisplayAlert("Success", "Diary saved locally! Syncing in background...", "OK");
 
-                // Navigate to the Community Page
-                // CommunityPage will automatically load the latest diary entries from the database
-                await Navigation.PushAsync(new CommunityPage(_repository));
-            }
-            else
+            // Clean up the UI
+            TxtDiaryEntry.Text = string.Empty;
+            LblFileName.Text = "No file chosen";
+            _selectedImagePath = string.Empty; // Reset Path
+
+            // 导航
+            await Navigation.PushAsync(new CommunityPage(_repository));
+        }
+
+        private (string name, int score) GetMoodDetails(string emojiFile)
+        {
+            switch (emojiFile)
             {
-                await DisplayAlert("Error", "Failed to save diary.", "OK");
+                case "emoji_dead.png": return ("Super unhappy", 1);
+                case "emoji_sad.png": return ("unhappy", 2);
+                case "emoji_neutral.png": return ("normal", 3);
+                case "emoji_smile.png": return ("happy", 4);
+                case "emoji_love.png": return ("super happy", 5);
+                default: return ("normal", 3);
             }
         }
 
-        // Bottom Navigation Logic
         private async void OnNavTapped(object sender, EventArgs e)
         {
             string destination = ((Button)sender).AutomationId;
-
-            if (destination == "Community")
-            {
-                await Navigation.PushAsync(new CommunityPage(_repository));
-            }
-            else if (destination == "List")
-            {
-                var repo = IPlatformApplication.Current.Services.GetService<Services.IAssessmentRepository>();
-                await Navigation.PushAsync(new AssessmentPage(repo));
-            }
-            else if (destination == "Stats")
-            {
-                var repo = IPlatformApplication.Current.Services.GetService<Services.IAssessmentRepository>();
-                await Navigation.PushAsync(new AnalyticPage(repo));
-            }
-            else if (destination == "Profile")
-            {
-                await Navigation.PushAsync(new ProfilePage());
-            }
+            if (destination == "Community") await Navigation.PushAsync(new CommunityPage(_repository));
+            else if (destination == "List") await Navigation.PushAsync(new AssessmentPage(_repository));
+            else if (destination == "Stats") await Navigation.PushAsync(new AnalyticPage(_repository));
+            else if (destination == "Profile") await Navigation.PushAsync(new ProfilePage());
         }
     }
 }

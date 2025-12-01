@@ -22,16 +22,18 @@ namespace Mental_Health_Wellness_Tracker.Services
         Task SyncPendingAssessmentsAsync();
 
         // Diary entry methods
-        Task<bool> SaveDiaryEntryAsync(DiaryEntry entry);
+        Task AddDiaryEntryAsync(LocalDiaryEntry entry);
         // Retrieve diary entries for a specific user
-        Task<List<DiaryEntry>> GetDiaryEntriesAsync(string userId);
-        // Sync pending diary entries that have not yet been uploaded to the server
-        Task SyncPendingDiaryEntriesAsync();
+        Task<List<LocalDiaryEntry>> GetLocalDiaryEntriesAsync(string userId);
+        //// Sync pending diary entries that have not yet been uploaded to the server
+        //Task SyncPendingDiaryEntriesAsync();
         // Retrieve all diary entries from the cloud (for community page)
         Task<List<DiaryEntry>> GetAllDiaryEntriesFromCloudAsync();
         // User profile methods
         Task<bool> SaveUserProfileAsync(UserProfile profile);
         // Retrieve user profile by user ID
         Task<UserProfile> GetUserProfileAsync(string userId);
+        // Sync assessments history from cloud to local database
+        Task SyncAssessmentFromCloudAsync(string userId);
     }
 }

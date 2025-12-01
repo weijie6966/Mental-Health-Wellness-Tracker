@@ -45,7 +45,7 @@ namespace Mental_Health_Wellness_Tracker.Services
                 var token = await userCredential.User.GetIdTokenAsync();
 
                 // Save user session
-                await SaveUserSession(token, userCredential.User.Uid);
+                await SaveUserSession(token, userCredential.User.Uid, email);
 
                 return userCredential.User.Uid;
             }
@@ -76,7 +76,7 @@ namespace Mental_Health_Wellness_Tracker.Services
                 var token = await userCredential.User.GetIdTokenAsync();
 
                 // Save user session
-                await SaveUserSession(token, userCredential.User.Uid);
+                await SaveUserSession(token, userCredential.User.Uid, email);
 
                 return userCredential.User.Uid;
             }
@@ -167,10 +167,11 @@ namespace Mental_Health_Wellness_Tracker.Services
         }
 
         // Private helper method: Save user session data to secure storage
-        private async Task SaveUserSession(string token, string userId)
+        private async Task SaveUserSession(string token, string userId, string email)
         {
             await SecureStorage.SetAsync("auth_token", token);
             await SecureStorage.SetAsync("user_id", userId);
+            await SecureStorage.SetAsync("user_email", email);
         }
     }
 }

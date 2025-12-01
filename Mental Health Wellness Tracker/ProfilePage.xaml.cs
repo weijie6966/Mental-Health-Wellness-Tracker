@@ -13,6 +13,9 @@ namespace Mental_Health_Wellness_Tracker
         private readonly IAssessmentRepository _repository;
         private string _currentUserId;
 
+        // Use a variable to track the current image path (whether it's loaded from the database or newly selected)
+        private string _currentImagePath = string.Empty;
+
         // Default constructor (used by App Shell or Navigation sometimes)
         public ProfilePage()
         {
@@ -59,6 +62,9 @@ namespace Mental_Health_Wellness_Tracker
                 EntryUsername.Text = profile.Username;
                 EditorBio.Text = profile.Bio;
 
+                // When loading data, the path in the database is assigned to a variable
+                _currentImagePath = profile.ProfileImagePath;
+
                 // While loading data, update the local cache to ensure that the name can be retrieved when writing a diary entry.
                 Preferences.Set("UsernameKey", profile.Username);
 
@@ -73,6 +79,7 @@ namespace Mental_Health_Wellness_Tracker
                 // No profile yet? Set defaults (but don't save yet)
                 EntryUsername.Text = "";
                 EditorBio.Text = "";
+                _currentImagePath = "";
             }
         }
 
@@ -93,7 +100,11 @@ namespace Mental_Health_Wellness_Tracker
                 // Keep existing image path if we haven't changed it here (logic simplified)
                 // For now, we rely on the file picker saving to Preferences or we need to track it.
                 // Let's grab the image path from Preferences as a temporary holding spot or track it in a field.
-                ProfileImagePath = Preferences.Get("TempProfileImagePath", "")
+                //ProfileImagePath = Preferences.Get("TempProfileImagePath", "")
+
+                // We can directly use the variables we're tracking,
+                // which will prevent accidentally overwriting old avatars
+                ProfileImagePath = _currentImagePath
             };
 
             // 2. Save to Database
@@ -138,9 +149,9 @@ namespace Mental_Health_Wellness_Tracker
         {
             MenuOverlay.IsVisible = false;
             // Logic to view image (omitted for brevity, similar to before)
-            string savedPath = Preferences.Get("TempProfileImagePath", string.Empty);
-            if (!string.IsNullOrEmpty(savedPath))
-                await Navigation.PushAsync(new ProfilePictureViewPage(savedPath));
+            //string savedPath = Preferences.Get("TempProfileImagePath", string.Empty);
+            if (!string.IsNullOrEmpty(_currentImagePath))
+                await Navigation.PushAsync(new ProfilePictureViewPage(_currentImagePath));
             else
                 await Navigation.PushAsync(new ProfilePictureViewPage("nav_profile.png"));
         }
@@ -161,7 +172,10 @@ namespace Mental_Health_Wellness_Tracker
                 {
                     ImgProfileAvatar.Source = ImageSource.FromFile(result.FullPath);
                     // Save temporarily to Prefs so SaveProfileClicked can grab it
-                    Preferences.Set("TempProfileImagePath", result.FullPath);
+                    //Preferences.Set("TempProfileImagePath", result.FullPath);
+
+                    // The user selected a new image; the variables were updated
+                    _currentImagePath = result.FullPath;
                 }
             }
             catch (Exception ex)

@@ -6,6 +6,8 @@ using System.Linq;
 using Mental_Health_Wellness_Tracker.Services;
 using Mental_Health_Wellness_Tracker.Models;
 using System.ComponentModel;
+using Microsoft.Maui.Storage;   // Reference Storage to retrieve user information
+using System.Text.Json;         // Reference JSON serialization tool
 
 namespace Mental_Health_Wellness_Tracker
 {
@@ -138,9 +140,21 @@ namespace Mental_Health_Wellness_Tracker
                 return;
             }
 
+            var userId = await SecureStorage.GetAsync("user_id");
+            var userEmail = await SecureStorage.GetAsync("user_email");
+            var username = Preferences.Get("UsernameKey", "User"); // Assuming you saved this key in ProfilePage
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                await DisplayAlert("Error", "Please login first.", "OK");
+                return; // Ensure the user is logged in and redirect to login page
+            }
+
             // Calculate the total score
             int totalScore = 0;
             //var detailedAnswers = new List<AnswerDetail>(); // Preparing to save detailed answers
+            //
+            var detailedAnswers = new List<object>();
 
             foreach (var q in Questions)
             {
@@ -153,6 +167,15 @@ namespace Mental_Health_Wellness_Tracker
                 }
 
                 totalScore += finalPoints;
+
+                // Prepare detailed answer record
+                detailedAnswers.Add(new
+                {
+                    QuestionId = q.DbId,
+                    RawScore = q.SelectedScore,
+                    FinalScore = finalPoints,
+                    IsReversed = q.IsReversed
+                });
             }
 
             // Evaluation of generated results
@@ -165,12 +188,14 @@ namespace Mental_Health_Wellness_Tracker
             var result = new AssessmentResult
             {
                 UserId = await SecureStorage.GetAsync("user_id") ?? "unknown_user", // Get the ID of the currently logged-in user
+                UserEmail = userEmail,
+                Username = username,
                 TestType = "Rosenberg",
                 DateTaken = DateTime.Now,
                 TotalScore = totalScore,
                 CalculatedResult = resultText,
                 IsSynced = false,
-                // AnswersJson = ... (If you want to store detailed JSON, you can serialize detailedAnswers here)
+                AnswersJson = JsonSerializer.Serialize(detailedAnswers)     // To store detailed JSON, you can serialize detailedAnswers here
             };
 
             // Save to the database
@@ -180,7 +205,8 @@ namespace Mental_Health_Wellness_Tracker
             {
                 await DisplayAlert("Result", $"Your Score: {totalScore}\nResult: {resultText}", "OK");
                 // Navigate back or to another page as needed
-                //await Navigation.PopAsync();
+                // Return after successful submission
+                await Navigation.PopAsync();
             }
             else
             {

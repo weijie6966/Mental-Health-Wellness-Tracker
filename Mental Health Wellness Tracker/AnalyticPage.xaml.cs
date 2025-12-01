@@ -1,9 +1,9 @@
+using Mental_Health_Wellness_Tracker.Models;
+using Mental_Health_Wellness_Tracker.Services;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage; // Used to obtain UserID
 using System;
 using System.Collections.ObjectModel;
-using Mental_Health_Wellness_Tracker.Services;
-using Mental_Health_Wellness_Tracker.Models;
-using Microsoft.Maui.Storage; // Used to obtain UserID
 
 namespace Mental_Health_Wellness_Tracker
 {
@@ -23,6 +23,9 @@ namespace Mental_Health_Wellness_Tracker
 
             // Set the BindingContext so that XAML can access the HistoryList.
             this.BindingContext = this;
+
+            // Connect the list (HistoryCollection) on the interface to the data source (HistoryList)
+            HistoryCollection.ItemsSource = HistoryList;
         }
 
         // Triggered every time the page is displayed (better than the constructor, supports page refresh).
@@ -37,19 +40,50 @@ namespace Mental_Health_Wellness_Tracker
         {
             // Get current user ID
             string userId = await SecureStorage.GetAsync("user_id") ?? "unknown_user";
+            if (string.IsNullOrEmpty(userId))
+                return; // Security check
 
-            // Retrieve the user's historical records from the database.
+            // First, try syncing the latest data from the cloud (Fire and Forget, without blocking the UI)
+            // We won't await it; let it run in the background so users can immediately see the locally cached data.
+            _ = Task.Run(async () =>
+            {
+                await _repository.SyncAssessmentFromCloudAsync(userId);
+
+                // After synchronization is complete, the UI should be refreshed on the main thread.
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    // Reread the latest full list from the database
+                    await ReloadLocalList(userId);
+                });
+            });
+
+            // Display existing local data immediately(guaranteed to open in seconds).
+            await ReloadLocalList(userId);
+
+
+            //// Retrieve the user's historical records from the database.
+            //var results = await _repository.GetAssessmentHistoryAsync(userId);
+
+            //// Clear old data and add new data
+            //HistoryList.Clear();
+            //foreach (var result in results)
+            //{
+            //    HistoryList.Add(result);
+            //}
+
+            //// Ensure that the CollectionView on the front end uses this list.
+            //HistoryCollection.ItemsSource = HistoryList;
+        }
+
+        // Extracting the logic for reading from the local database makes it easier to reuse
+        private async Task ReloadLocalList (string userId)
+        {
             var results = await _repository.GetAssessmentHistoryAsync(userId);
-
-            // Clear old data and add new data
             HistoryList.Clear();
             foreach (var result in results)
             {
                 HistoryList.Add(result);
             }
-
-            // Ensure that the CollectionView on the front end uses this list.
-            HistoryCollection.ItemsSource = HistoryList;
         }
 
         // Navigation logic for the bottom bar

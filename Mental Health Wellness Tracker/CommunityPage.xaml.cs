@@ -146,7 +146,7 @@ namespace Mental_Health_Wellness_Tracker
                 // If there is no internet connection or the retrieval fails, load your local logs (fallback solution).
                 string userId = await SecureStorage.GetAsync("user_id") ?? "unknown_user";
                 string myName = Preferences.Get("UsernameKey", "Me");
-                var localDiaries = await _repository.GetDiaryEntriesAsync(userId);
+                var localDiaries = await _repository.GetLocalDiaryEntriesAsync(userId);
 
                 foreach (var diary in localDiaries)
                 {

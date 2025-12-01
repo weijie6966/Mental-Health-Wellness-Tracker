@@ -1,5 +1,8 @@
 ﻿using Mental_Health_Wellness_Tracker;
 using Mental_Health_Wellness_Tracker.Services;
+using Microsoft.Extensions.Logging;
+
+namespace Mental_Health_Wellness_Tracker;
 
 public static class MauiProgram
 {

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mental_Health_Wellness_Tracker.AssessmentDetailPage"
+             Title="Assessment Detail"
+             BackgroundColor="#0B0E23"
+             NavigationPage.HasNavigationBar="False">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="30">
+
+            <Label Text="RESULT DETAIL" TextColor="Cyan" FontSize="25" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,20,0,20"/>
+
+            <Label x:Name="LblDate" Text="Date: --" TextColor="Gray" HorizontalOptions="Center"/>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                <Border Grid.Column="0" BackgroundColor="RoyalBlue" StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0">
+                    <VerticalStackLayout>
+                        <Label Text="SCORE" TextColor="White" HorizontalOptions="Center" FontSize="10"/>
+                        <Label x:Name="LblScore" Text="0" TextColor="White" FontSize="30" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" BackgroundColor="Aqua" StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0">
+                    <VerticalStackLayout>
+                        <Label Text="STATUS" TextColor="Black" HorizontalOptions="Center" FontSize="10"/>
+                        <Label x:Name="LblStatus" Text="--" TextColor="Black" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Border BackgroundColor="#10FFFFFF" StrokeShape="RoundRectangle 20" Padding="20" StrokeThickness="0" Margin="0,20">
+                <VerticalStackLayout>
+                    <Label Text="Analysis Chart" TextColor="White" FontAttributes="Bold" Margin="0,0,0,15"/>
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*, Auto, Auto" HeightRequest="150" ColumnSpacing="15" VerticalOptions="End">
+
+                        <BoxView x:Name="BarLow" Grid.Column="0" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="0" CornerRadius="5"/>
+                        <Label Text="Low" Grid.Column="0" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12"/>
+                        <Label x:Name="LblCountLow" Grid.Column="0" Grid.Row="2" Text="0" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+
+                        <BoxView x:Name="BarNormal" Grid.Column="1" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="0" CornerRadius="5"/>
+                        <Label Text="Normal" Grid.Column="1" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12"/>
+                        <Label x:Name="LblCountNormal" Grid.Column="1" Grid.Row="2" Text="0" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+
+                        <BoxView x:Name="BarHigh" Grid.Column="2" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="0" CornerRadius="5"/>
+                        <Label Text="High" Grid.Column="2" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12"/>
+                        <Label x:Name="LblCountHigh" Grid.Column="2" Grid.Row="2" Text="0" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="BACK" Clicked="OnBackClicked" BackgroundColor="#20FFFFFF" TextColor="White" CornerRadius="20"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,76 +1,76 @@
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Mental_Health_Wellness_Tracker
 {
-    // 1. COMMENT MODEL (New class for individual comments)
     public class PostComment
     {
         public string Username { get; set; }
         public string Text { get; set; }
+        public DateTime CommentTime { get; set; }
+        public string TimeDisplay => CommentTime.ToString("h:mm tt");
     }
 
-    // 2. POST MODEL (Updated to support your XAML bindings)
     public class Post : INotifyPropertyChanged
     {
         public string Username { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
+        public string UserProfileImage { get; set; } = "user_icon_placeholder.png";
+        public DateTime PostTime { get; set; }
+        public string TimeDisplay => PostTime.ToString("dd MMM, h:mm tt");
+
+        private string _content;
+        public string Content
+        {
+            get => _content;
+            set { if (_content != value) { _content = value; OnPropertyChanged(); } }
+        }
+
         public string MoodEmoji { get; set; } = "emoji_neutral.png";
 
-        // -- LIKES --
+        public bool IsOwner
+        {
+            get
+            {
+                string currentUser = Preferences.Get("UsernameKey", "New User");
+                return Username == currentUser;
+            }
+        }
+
+        // --- UPDATED: SUPPORT MULTIPLE IMAGES ---
+        // We now store a List of Images instead of a single one
+        public ObservableCollection<ImageSource> PostImages { get; set; } = new ObservableCollection<ImageSource>();
+
+        // Helper to hide the carousel if no images were uploaded
+        public bool HasImages => PostImages != null && PostImages.Count > 0;
+        // ----------------------------------------
+
         private int _likes;
         public int Likes
         {
             get => _likes;
-            set
-            {
-                if (_likes != value)
-                {
-                    _likes = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(LikesText)); // Update the text when number changes
-                }
-            }
+            set { if (_likes != value) { _likes = value; OnPropertyChanged(); OnPropertyChanged(nameof(LikesText)); } }
         }
-        // Returns "5 Likes" or "1 Like"
         public string LikesText => $"{Likes} Like{(Likes == 1 ? "" : "s")}";
 
-        // -- COMMENTS COUNT --
         private int _commentsCount;
         public int Comments
         {
             get => _commentsCount;
-            set
-            {
-                if (_commentsCount != value)
-                {
-                    _commentsCount = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(CommentsText)); // Update the text when number changes
-                }
-            }
+            set { if (_commentsCount != value) { _commentsCount = value; OnPropertyChanged(); OnPropertyChanged(nameof(CommentsText)); } }
         }
-        // Returns "3 Comments"
         public string CommentsText => $"{Comments} Comment{(Comments == 1 ? "" : "s")}";
 
-        // -- COMMENTS VISIBILITY --
         private bool _isCommentsVisible;
         public bool IsCommentsVisible
         {
             get => _isCommentsVisible;
-            set
-            {
-                if (_isCommentsVisible != value)
-                {
-                    _isCommentsVisible = value;
-                    OnPropertyChanged();
-                }
-            }
+            set { if (_isCommentsVisible != value) { _isCommentsVisible = value; OnPropertyChanged(); } }
         }
 
-        // -- LIST OF COMMENTS --
         public ObservableCollection<PostComment> CommentsList { get; set; } = new ObservableCollection<PostComment>();
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -80,128 +80,78 @@ namespace Mental_Health_Wellness_Tracker
         }
     }
 
-    // 3. PAGE LOGIC
     public partial class CommunityPage : ContentPage, INotifyPropertyChanged
     {
-        public ObservableCollection<Post> Posts { get; set; }
+        public static ObservableCollection<Post> SharedPosts { get; set; } = new ObservableCollection<Post>();
 
-        // Track which post the user is currently trying to comment on
         private Post _activePostForComment;
-
-        // Property to show/hide the bottom input bar (referenced in XAML Row 1)
         private bool _isInputVisible;
-        public bool IsInputVisible
-        {
-            get => _isInputVisible;
-            set
-            {
-                _isInputVisible = value;
-                OnPropertyChanged(nameof(IsInputVisible));
-            }
-        }
+        public bool IsInputVisible { get => _isInputVisible; set { _isInputVisible = value; OnPropertyChanged(nameof(IsInputVisible)); } }
 
         public CommunityPage(Post newEntry = null)
         {
             InitializeComponent();
-            BindingContext = this; // Important! Allows the Page to bind to IsInputVisible
+            BindingContext = this;
 
-            // Initialize Sample Data with Comments
-            Posts = new ObservableCollection<Post>
+            if (newEntry != null)
             {
-                new Post
-                {
-                    Username = "SarahM",
-                    Content = "Feeling much better today after my morning walk!",
-                    MoodEmoji = "emoji_love.png",
-                    Likes = 5,
-                    Comments = 1,
-                    CommentsList = new ObservableCollection<PostComment>
-                    {
-                        new PostComment { Username = "JohnD", Text = "Great job! Keep it up." }
-                    }
-                },
-                new Post
-                {
-                    Username = "Mike22",
-                    Content = "Anxiety is high today. Breathing exercises aren't working.",
-                    MoodEmoji = "emoji_sad.png",
-                    Likes = 2,
-                    Comments = 0
-                }
-            };
+                SharedPosts.Insert(0, newEntry);
+            }
 
-            if (newEntry != null) Posts.Insert(0, newEntry);
-            PostsCollection.ItemsSource = Posts;
+            PostsCollection.ItemsSource = SharedPosts;
         }
 
-        // --- FIX FOR THE ERROR: VIEW COMMENTS CLICKED ---
+        // (Rest of logic: Delete, Edit, Comment, Like, Nav remains the same)
+        private async void OnDeleteClicked(object sender, EventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is Post postToDelete)
+            {
+                bool answer = await DisplayAlert("Delete Post", "Are you sure?", "Yes", "No");
+                if (answer) SharedPosts.Remove(postToDelete);
+            }
+        }
+
+        private async void OnEditClicked(object sender, EventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is Post postToEdit)
+            {
+                string result = await DisplayPromptAsync("Edit Post", "Update text:", initialValue: postToEdit.Content);
+                if (result != null) postToEdit.Content = result;
+            }
+        }
+
         private void OnCommentViewClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
             var selectedPost = button?.BindingContext as Post;
-
             if (selectedPost == null) return;
-
-            // Toggle the visibility of the comments list inside the card
             selectedPost.IsCommentsVisible = !selectedPost.IsCommentsVisible;
-
-            // Handle the Shared Input Bar at the bottom
-            if (selectedPost.IsCommentsVisible)
-            {
-                _activePostForComment = selectedPost;
-                IsInputVisible = true; // Show the input bar
-                EntryCommentText.Focus(); // Focus the cursor
-            }
-            else
-            {
-                _activePostForComment = null;
-                IsInputVisible = false; // Hide the input bar
-                EntryCommentText.Unfocus();
-            }
+            if (selectedPost.IsCommentsVisible) { _activePostForComment = selectedPost; IsInputVisible = true; EntryCommentText.Focus(); }
+            else { _activePostForComment = null; IsInputVisible = false; EntryCommentText.Unfocus(); }
         }
 
-        // --- SEND COMMENT LOGIC ---
         private void OnCommentSendClicked(object sender, EventArgs e)
         {
-            string text = EntryCommentText.Text;
-
-            if (string.IsNullOrWhiteSpace(text) || _activePostForComment == null) return;
-
-            // Add the new comment to the active post
+            if (string.IsNullOrWhiteSpace(EntryCommentText.Text) || _activePostForComment == null) return;
             _activePostForComment.CommentsList.Add(new PostComment
             {
-                Username = "Me", // You can replace this with the logged-in user's name
-                Text = text
+                Username = Preferences.Get("UsernameKey", "Me"),
+                Text = EntryCommentText.Text,
+                CommentTime = DateTime.Now
             });
-
-            // Update the counters
             _activePostForComment.Comments++;
-
-            // Clear the input
-            EntryCommentText.Text = string.Empty;
+            EntryCommentText.Text = "";
         }
 
-        // --- LIKE LOGIC ---
-        private void OnLikeClicked(object sender, EventArgs e)
-        {
-            if (sender is Button button && button.CommandParameter is Post post)
-            {
-                post.Likes++;
-            }
-        }
+        private void OnLikeClicked(object sender, EventArgs e) { if (sender is Button b && b.CommandParameter is Post p) p.Likes++; }
 
-        // --- NAVIGATION LOGIC ---
         private async void OnNavTapped(object sender, EventArgs e)
         {
-            string destination = ((Button)sender).AutomationId;
-
-            // Prevent navigating to the page we are already on
-            if (destination == "Community") return;
-
-            if (destination == "List") await Navigation.PushAsync(new AssessmentPage());
-            else if (destination == "Diary") await Navigation.PushAsync(new WriteDiaryPage());
-            else if (destination == "Stats") await Navigation.PushAsync(new AnalyticPage());
-            else if (destination == "Profile") await Navigation.PushAsync(new ProfilePage());
+            string d = ((Button)sender).AutomationId;
+            if (d == "List") await Navigation.PushAsync(new AssessmentPage());
+            else if (d == "Diary") await Navigation.PushAsync(new WriteDiaryPage());
+            else if (d == "Stats") await Navigation.PushAsync(new AnalyticPage());
+            else if (d == "Profile") await Navigation.PushAsync(new ProfilePage());
         }
     }
 }

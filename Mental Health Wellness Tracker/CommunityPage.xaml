@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Mental_Health_Wellness_Tracker.CommunityPage"
-             BackgroundColor="#0B0E23"
              NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Resources>
@@ -10,14 +9,10 @@
             <Color x:Key="TextCyan">#00E5FF</Color>
             <Color x:Key="ActiveNavColor">#689FBD</Color>
             <Color x:Key="CommentBGColor">#181E3F</Color>
-
-            <!-- Card Gradient: Purple to Cyan -->
             <LinearGradientBrush x:Key="CardGradient" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#9F55FF" Offset="0.0" />
                 <GradientStop Color="#00E5FF" Offset="1.0" />
             </LinearGradientBrush>
-
-            <!-- Input Gradient (for the shared comment input) -->
             <LinearGradientBrush x:Key="InputGradient" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#8A2BE2" Offset="0.0" />
                 <GradientStop Color="#FF7F50" Offset="1.0" />
@@ -26,139 +21,124 @@
     </ContentPage.Resources>
 
     <ContentPage.BindingContext>
-        <!-- Set the BindingContext to the page itself for the shared input visibility -->
         <x:Reference Name="CommunityPageReference"/>
     </ContentPage.BindingContext>
 
-    <Grid RowDefinitions="*, Auto, 80" x:Name="CommunityPageReference">
+    <Grid>
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
 
-        <!-- SCROLLABLE FEED (Row 0) -->
-        <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="20,20,20,0" Spacing="15">
+        <Grid RowDefinitions="Auto, *, Auto, 80" x:Name="CommunityPageReference">
 
-                <!-- Page Header -->
-                <Label Text="COMMUNITY" FontFamily="BrushFont" FontSize="35" TextColor="{StaticResource TextCyan}" HorizontalOptions="Center" Margin="0,10,0,10"/>
+            <Label Grid.Row="0" Text="COMMUNITY" FontFamily="BrushFont" FontSize="35" TextColor="{StaticResource TextCyan}" HorizontalOptions="Center" Margin="0,30,0,10"/>
 
-                <!-- The List of Posts -->
-                <CollectionView x:Name="PostsCollection">
+            <CollectionView Grid.Row="1" x:Name="PostsCollection" Margin="20,0,20,0">
+                <CollectionView.EmptyView>
+                    <Grid>
+                        <Label Text="No feed posted yet!" FontFamily="BrushFont" FontSize="30" TextColor="{StaticResource TextCyan}" Opacity="0.8" VerticalOptions="Center" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                    </Grid>
+                </CollectionView.EmptyView>
 
-                    <CollectionView.EmptyView>
-                        <VerticalStackLayout VerticalOptions="CenterAndExpand" Margin="0,150,0,0">
-                            <Label Text="No feed posted yet!" FontFamily="BrushFont" FontSize="30" TextColor="{StaticResource TextCyan}" Opacity="0.8" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
-                        </VerticalStackLayout>
-                    </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <VerticalStackLayout Spacing="0" Margin="0,0,0,20">
 
-                    <!-- DATA TEMPLATE (Each Post) -->
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <VerticalStackLayout Spacing="0" Margin="0,0,0,20">
+                            <Border StrokeShape="RoundRectangle 20,20,0,0" Background="{StaticResource CardGradient}" StrokeThickness="0" Padding="15" MinimumHeightRequest="150">
+                                <VerticalStackLayout Spacing="10">
 
-                                <!-- Post Card -->
-                                <Border StrokeShape="RoundRectangle 20,20,0,0" Background="{StaticResource CardGradient}" StrokeThickness="0" Padding="15" MinimumHeightRequest="150">
+                                    <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                                        <Image Grid.Column="0" Source="{Binding UserProfileImage}" HeightRequest="40" WidthRequest="40" Aspect="AspectFill">
+                                            <Image.Clip>
+                                                <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20"/>
+                                            </Image.Clip>
+                                        </Image>
 
-                                    <VerticalStackLayout Spacing="10">
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="10,0,0,0" Spacing="0">
+                                            <Label Text="{Binding Username}" TextColor="Black" FontAttributes="Bold" FontSize="14"/>
+                                            <Label Text="{Binding TimeDisplay}" TextColor="#333333" FontSize="10" FontAttributes="Italic"/>
+                                        </VerticalStackLayout>
 
-                                        <!-- User Info & Mood Emoji -->
-                                        <Grid ColumnDefinitions="Auto, *, Auto">
-                                            <Image Grid.Column="0" Source="user_icon_placeholder.png" HeightRequest="40" WidthRequest="40" Aspect="AspectFill"/>
-                                            <Label Grid.Column="1" Text="{Binding Username}" TextColor="Black" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
-                                            <Image Grid.Column="2" Source="{Binding MoodEmoji}" HeightRequest="30" WidthRequest="30" HorizontalOptions="End" VerticalOptions="Center"/>
-                                        </Grid>
+                                        <Image Grid.Column="2" Source="{Binding MoodEmoji}" HeightRequest="30" WidthRequest="30" VerticalOptions="Center" Margin="0,0,10,0"/>
 
-                                        <!-- Content -->
-                                        <Label Text="{Binding Content}" TextColor="Black" FontSize="14" Margin="0, 5, 0, 10" VerticalOptions="StartAndExpand" LineBreakMode="WordWrap"/>
+                                        <HorizontalStackLayout Grid.Column="3" Spacing="0" VerticalOptions="Center" IsVisible="{Binding IsOwner}">
+                                            <Button Text="Edit" TextColor="Black" FontSize="12" FontAttributes="Bold" BackgroundColor="Transparent" Padding="5,0" HeightRequest="30" Clicked="OnEditClicked" CommandParameter="{Binding .}"/>
+                                            <Button Text="Delete" TextColor="Red" FontSize="12" FontAttributes="Bold" BackgroundColor="Transparent" Padding="5,0" HeightRequest="30" Clicked="OnDeleteClicked" CommandParameter="{Binding .}"/>
+                                        </HorizontalStackLayout>
+                                    </Grid>
 
-                                        <!-- Interaction Buttons -->
-                                        <Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="10" VerticalOptions="End" HorizontalOptions="Start">
+                                    <Label Text="{Binding Content}" TextColor="Black" FontSize="14" Margin="0, 5, 0, 10" VerticalOptions="StartAndExpand" LineBreakMode="WordWrap"/>
 
-                                            <!-- Like Button -->
-                                            <Button Grid.Column="0" Text="{Binding LikesText}" Clicked="OnLikeClicked" CommandParameter="{Binding .}" 
-                                                    TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
-
-                                            <!-- Comment Button (Toggles Visibility) -->
-                                            <Button Grid.Column="1" Text="{Binding CommentsText}" Clicked="OnCommentViewClicked" CommandParameter="{Binding .}" 
-                                                    TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
-                                        </Grid>
-                                    </VerticalStackLayout>
-                                </Border>
-
-                                <!-- INLINE COMMENTS SECTION (Conditionally Visible) -->
-                                <VerticalStackLayout IsVisible="{Binding IsCommentsVisible}" Padding="10" BackgroundColor="{StaticResource CommentBGColor}">
-
-                                    <Label Text="Recent Comments" FontAttributes="Bold" TextColor="White" Margin="0,5,0,5"/>
-
-                                    <!-- Nested CollectionView for Comments -->
-                                    <CollectionView ItemsSource="{Binding CommentsList}">
-                                        <CollectionView.ItemTemplate>
+                                    <CarouselView ItemsSource="{Binding PostImages}"
+                                                  IsVisible="{Binding HasImages}"
+                                                  HeightRequest="250"
+                                                  Loop="False"
+                                                  IndicatorView="ImageIndicator">
+                                        <CarouselView.ItemTemplate>
                                             <DataTemplate>
-                                                <VerticalStackLayout Margin="0, 0, 0, 5">
-                                                    <Label>
-                                                        <Label.FormattedText>
-                                                            <FormattedString>
-                                                                <Span Text="{Binding Username}" FontAttributes="Bold" TextColor="{StaticResource TextCyan}"/>
-                                                                <Span Text="  "/>
-                                                                <Span Text="{Binding Text}" TextColor="White"/>
-                                                            </FormattedString>
-                                                        </Label.FormattedText>
-                                                    </Label>
-                                                </VerticalStackLayout>
+                                                <Image Source="{Binding .}" 
+                                                       Aspect="AspectFit" 
+                                                       HorizontalOptions="Fill" 
+                                                       VerticalOptions="Center"/>
                                             </DataTemplate>
-                                        </CollectionView.ItemTemplate>
-                                        <CollectionView.EmptyView>
-                                            <Label Text="Be the first to comment!" TextColor="Gray" HorizontalOptions="Center"/>
-                                        </CollectionView.EmptyView>
-                                    </CollectionView>
+                                        </CarouselView.ItemTemplate>
+                                    </CarouselView>
 
+                                    <IndicatorView x:Name="ImageIndicator"
+                                                   IndicatorColor="LightGray"
+                                                   SelectedIndicatorColor="Black"
+                                                   HorizontalOptions="Center"
+                                                   Margin="0,0,0,10"/>
+
+                                    <Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="10" VerticalOptions="End" HorizontalOptions="Start">
+                                        <Button Grid.Column="0" Text="{Binding LikesText}" Clicked="OnLikeClicked" CommandParameter="{Binding .}" TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
+                                        <Button Grid.Column="1" Text="{Binding CommentsText}" Clicked="OnCommentViewClicked" CommandParameter="{Binding .}" TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
+                                    </Grid>
                                 </VerticalStackLayout>
+                            </Border>
 
-                                <!-- Bottom Border -->
-                                <BoxView Color="{StaticResource CommentBGColor}" HeightRequest="2" IsVisible="{Binding IsCommentsVisible}"/>
-
+                            <VerticalStackLayout IsVisible="{Binding IsCommentsVisible}" Padding="10" BackgroundColor="{StaticResource CommentBGColor}">
+                                <Label Text="Recent Comments" FontAttributes="Bold" TextColor="White" Margin="0,5,0,5"/>
+                                <CollectionView ItemsSource="{Binding CommentsList}">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <VerticalStackLayout Margin="0, 0, 0, 8">
+                                                <Label>
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding Username}" FontAttributes="Bold" TextColor="{StaticResource TextCyan}"/>
+                                                            <Span Text="  "/>
+                                                            <Span Text="{Binding Text}" TextColor="White"/>
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
+                                                <Label Text="{Binding TimeDisplay}" TextColor="Gray" FontSize="10" Margin="0,2,0,0"/>
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
                             </VerticalStackLayout>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                            <BoxView Color="{StaticResource CommentBGColor}" HeightRequest="2" IsVisible="{Binding IsCommentsVisible}"/>
 
-            </VerticalStackLayout>
-        </ScrollView>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
-        <!-- SHARED COMMENT INPUT AREA (Row 1) -->
-        <Border Grid.Row="1" 
-                StrokeShape="RoundRectangle 25"
-                Background="{StaticResource InputGradient}"
-                StrokeThickness="0"
-                HeightRequest="50"
-                Margin="20, 10, 20, 0"
-                IsVisible="{Binding IsInputVisible}">
-            <Grid ColumnDefinitions="*, Auto">
-                <Entry x:Name="EntryCommentText"
-                       Grid.Column="0"
-                       Placeholder="Write a comment..."
-                       PlaceholderColor="#33000000"
-                       TextColor="Black"
-                       Margin="15, 0"
-                       BackgroundColor="Transparent"/>
-                <Button Grid.Column="1"
-                        Text="SEND"
-                        Clicked="OnCommentSendClicked"
-                        TextColor="Black"
-                        BackgroundColor="#00E5FF"
-                        CornerRadius="25"
-                        Margin="0, 5, 5, 5"
-                        WidthRequest="80"/>
-            </Grid>
-        </Border>
+            <Border Grid.Row="2" StrokeShape="RoundRectangle 25" Background="{StaticResource InputGradient}" StrokeThickness="0" HeightRequest="50" Margin="20, 10, 20, 0" IsVisible="{Binding IsInputVisible}">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Entry x:Name="EntryCommentText" Grid.Column="0" Placeholder="Write a comment..." PlaceholderColor="#33000000" TextColor="Black" Margin="15, 0" BackgroundColor="Transparent"/>
+                    <Button Grid.Column="1" Text="SEND" Clicked="OnCommentSendClicked" TextColor="Black" BackgroundColor="#00E5FF" CornerRadius="25" Margin="0, 5, 5, 5" WidthRequest="80"/>
+                </Grid>
+            </Border>
 
-        <!-- BOTTOM NAVIGATION BAR (Button Structure) (Row 2) -->
-        <Border Grid.Row="2" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
-            <Grid ColumnDefinitions="*,*,*,*,*">
-
-                <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-            </Grid>
-        </Border>
+            <Border Grid.Row="3" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+                <Grid ColumnDefinitions="*,*,*,*,*">
+                    <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

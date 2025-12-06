@@ -1,75 +1,111 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Mental_Health_Wellness_Tracker"
              x:Class="Mental_Health_Wellness_Tracker.AnalyticPage"
-             BackgroundColor="#0B0E23"
              NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <Color x:Key="TextOrange">#FF4500</Color>
+            <Color x:Key="TextOrange">Cyan</Color>
             <Color x:Key="ActiveNavColor">#689FBD</Color>
-
-            <!-- Define block colors -->
-            <Color x:Key="Block1Color">#00008B</Color>
-            <Color x:Key="Block2Color">#6495ED</Color>
-            <Color x:Key="Block3Color">#40E0D0</Color>
-            <Color x:Key="Block4Color">#008B8B</Color>
-            <Color x:Key="Block5Color">#8A2BE2</Color>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <!-- Main Layout: Content on top, Nav Bar fixed at bottom -->
-    <Grid RowDefinitions="*, 80">
+    <Grid>
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
 
-        <!-- SCROLLABLE CONTENT -->
-        <ScrollView Grid.Row="0">
-            <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
+        <Grid RowDefinitions="*, 80">
+            <ScrollView Grid.Row="0">
+                <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
 
-                <Label Text="ANALYTIC"
-                       FontFamily="BrushFont"
-                       FontSize="35"
-                       TextColor="{StaticResource TextOrange}"
-                       HorizontalOptions="Center"
-                       Margin="0,10,0,20"/>
+                    <Label Text="ANALYTIC" FontFamily="BrushFont" FontSize="35" TextColor="{StaticResource TextOrange}" HorizontalOptions="Center" Margin="0,10,0,20"/>
 
-                <!-- Main Grid for the Analytic Blocks -->
-                <Grid RowDefinitions="120, 180, 120" 
-                      ColumnDefinitions="*,*"
-                      ColumnSpacing="20"
-                      RowSpacing="20"
-                      HorizontalOptions="FillAndExpand">
+                    <Grid RowDefinitions="120, 150, 220, Auto" ColumnDefinitions="*,*" ColumnSpacing="20" RowSpacing="20">
 
-                    <Border Grid.Row="0" Grid.Column="0" BackgroundColor="{StaticResource Block1Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
-                    <Border Grid.Row="0" Grid.Column="1" BackgroundColor="{StaticResource Block2Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
-                    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="{StaticResource Block3Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
-                    <Border Grid.Row="2" Grid.Column="0" BackgroundColor="{StaticResource Block4Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
-                    <Border Grid.Row="2" Grid.Column="1" BackgroundColor="{StaticResource Block5Color}" StrokeShape="RoundRectangle 20" StrokeThickness="0"/>
+                        <Border Grid.Row="0" Grid.Column="0" BackgroundColor="RoyalBlue" StrokeShape="RoundRectangle 20" StrokeThickness="0">
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="SCORE" TextColor="White" HorizontalOptions="Center" FontSize="12"/>
+                                <Label x:Name="LblScore" Text="0" TextColor="White" FontAttributes="Bold" FontSize="40" HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </Border>
 
+                        <Border Grid.Row="0" Grid.Column="1" BackgroundColor="Aqua" StrokeShape="RoundRectangle 20" StrokeThickness="0">
+                            <VerticalStackLayout VerticalOptions="Center" Padding="5">
+                                <Label Text="STATUS" TextColor="Black" HorizontalOptions="Center" FontSize="12"/>
+                                <Label x:Name="LblStatus" Text="--" TextColor="Black" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="Navy" StrokeShape="RoundRectangle 20" StrokeThickness="0" Padding="20">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="RECOMMENDATION" TextColor="Cyan" FontAttributes="Bold"/>
+                                <Label x:Name="LblRecommendation" Text="..." TextColor="White" FontSize="12"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="#10FFFFFF" StrokeShape="RoundRectangle 20" StrokeThickness="1" Stroke="Gray" Padding="20">
+                            <VerticalStackLayout>
+                                <Label Text="Symptom Frequency" TextColor="White" FontAttributes="Bold" Margin="0,0,0,15"/>
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="*, Auto, Auto" HeightRequest="150" ColumnSpacing="15" VerticalOptions="End">
+                                    <BoxView x:Name="BarLow" Grid.Column="0" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="0" CornerRadius="5"/>
+                                    <Label Text="Low" Grid.Column="0" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0"/>
+                                    <Label x:Name="LblCountLow" Grid.Column="0" Grid.Row="2" Text="0" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+
+                                    <BoxView x:Name="BarNormal" Grid.Column="1" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="0" CornerRadius="5"/>
+                                    <Label Text="Normal" Grid.Column="1" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0"/>
+                                    <Label x:Name="LblCountNormal" Grid.Column="1" Grid.Row="2" Text="0" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+
+                                    <BoxView x:Name="BarHigh" Grid.Column="2" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="0" CornerRadius="5"/>
+                                    <Label Text="High" Grid.Column="2" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0"/>
+                                    <Label x:Name="LblCountHigh" Grid.Column="2" Grid.Row="2" Text="0" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="10">
+                            <Label Text="HISTORY" TextColor="{StaticResource TextOrange}" FontAttributes="Bold" Margin="0,20,0,0"/>
+
+                            <CollectionView x:Name="HistoryCollectionView" HeightRequest="300">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="local:AssessmentHistoryItem">
+                                        <Border StrokeShape="RoundRectangle 10" BackgroundColor="#20FFFFFF" StrokeThickness="0" Padding="15" Margin="0,0,0,10">
+                                            <Grid ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+                                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding TestType}" TextColor="White" FontAttributes="Bold"/>
+                                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding Date, StringFormat='{0:MM/dd}'}" TextColor="LightGray" FontSize="12" HorizontalOptions="End" Margin="0,0,10,0"/>
+
+                                                <Label Grid.Row="1" Grid.Column="0" Text="{Binding Status}" TextColor="Cyan" FontSize="13" Margin="0,5,0,0"/>
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding Score, StringFormat='Score: {0}'}" TextColor="White" FontSize="13" HorizontalOptions="End" Margin="0,5,10,0"/>
+
+                                                <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" 
+                                                        Text="View" 
+                                                        TextColor="White" 
+                                                        BackgroundColor="#6495ED" 
+                                                        FontSize="12" 
+                                                        HeightRequest="35" 
+                                                        CornerRadius="8"
+                                                        Padding="10,0"
+                                                        Clicked="OnViewHistoryClicked"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+
+                    </Grid>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+                <Grid ColumnDefinitions="*,*,*,*,*">
+                    <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 </Grid>
-
-            </VerticalStackLayout>
-        </ScrollView>
-
-        <!-- BOTTOM NAVIGATION BAR (Button Structure) -->
-        <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
-            <Grid ColumnDefinitions="*,*,*,*,*">
-
-                <!-- 1. Community Button -->
-                <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-
-                <!-- 2. List Button -->
-                <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-
-                <!-- 3. Diary Button -->
-                <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-
-                <!-- 4. Stats Button (ACTIVE) -->
-                <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-
-                <!-- 5. Profile Button -->
-                <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-            </Grid>
-        </Border>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

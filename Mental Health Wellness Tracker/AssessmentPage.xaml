@@ -3,82 +3,91 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Mental_Health_Wellness_Tracker" 
              x:Class="Mental_Health_Wellness_Tracker.AssessmentPage"
-             BackgroundColor="#0B0E23"
              NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Resources>
         <ResourceDictionary>
             <Color x:Key="TextOrange">#FF4500</Color>
             <Color x:Key="ActiveNavColor">#689FBD</Color>
-            <Color x:Key="QuestionCardColor">#8A2BE2</Color>
-            <Color x:Key="AnswerButtonColor">#6495ED</Color>
             <Color x:Key="AnswerBorderColor">White</Color>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="*, 80">
+    <Grid>
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
 
-        <ScrollView Grid.Row="0">
-            <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
+        <Grid RowDefinitions="*, 80">
 
-                <Label Text="ASSESSMENT" FontFamily="BrushFont" FontSize="35" TextColor="{StaticResource TextOrange}" HorizontalOptions="Center" Margin="0,10,0,20"/>
+            <ScrollView Grid.Row="0">
+                <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
 
-                <CollectionView x:Name="QuestionsCollection">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="local:Question">
-                            <Border StrokeShape="RoundRectangle 20" BackgroundColor="{StaticResource QuestionCardColor}" StrokeThickness="0" Padding="20" Margin="0,0,0,20">
-                                <VerticalStackLayout Spacing="15">
-                                    <Label Text="{Binding Text}" 
-                                           TextColor="White" 
-                                           FontAttributes="Bold" 
-                                           FontSize="18"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="CenterAndExpand"
-                                           HorizontalTextAlignment="Center"/>
+                    <Label Text="ASSESSMENT" FontFamily="BrushFont" FontSize="35" TextColor="Cyan" HorizontalOptions="Center" Margin="0,10,0,20"/>
 
-                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto, Auto" ColumnSpacing="15" RowSpacing="15">
-                                        <!-- Answer Buttons (Border is used for dashed style) -->
-                                        <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 20" BackgroundColor="{StaticResource AnswerButtonColor}" StrokeDashArray="5" StrokeDashOffset="5" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                            <Label Text="{Binding Answers[0]}" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                        </Border>
-                                        <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 20" BackgroundColor="{StaticResource AnswerButtonColor}" StrokeDashArray="5" StrokeDashOffset="5" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                            <Label Text="{Binding Answers[1]}" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                        </Border>
-                                        <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 20" BackgroundColor="{StaticResource AnswerButtonColor}" StrokeDashArray="5" StrokeDashOffset="5" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                            <Label Text="{Binding Answers[2]}" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                        </Border>
-                                        <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 20" BackgroundColor="{StaticResource AnswerButtonColor}" StrokeDashArray="5" StrokeDashOffset="5" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                            <Label Text="{Binding Answers[3]}" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                        </Border>
-                                    </Grid>
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    <CollectionView x:Name="QuestionsCollection">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="local:Question">
+                                <Border StrokeShape="RoundRectangle 20" BackgroundColor="MidnightBlue" StrokeThickness="0" Padding="20" Margin="0,0,0,20">
+                                    <VerticalStackLayout Spacing="15">
 
-            </VerticalStackLayout>
-        </ScrollView>
+                                        <Label Text="{Binding Text}" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
 
-        <!-- BOTTOM NAVIGATION BAR (Button Structure) -->
-        <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
-            <Grid ColumnDefinitions="*,*,*,*,*">
+                                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto, Auto" ColumnSpacing="15" RowSpacing="15">
 
-                <!-- 1. Community Button -->
-                <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                                            <Border Grid.Row="0" Grid.Column="0" ClassId="0" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color0}" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnAnswerTapped"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[0]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
 
-                <!-- 2. List Button (ACTIVE) -->
-                <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                                            <Border Grid.Row="0" Grid.Column="1" ClassId="1" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color1}" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnAnswerTapped"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[1]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
 
-                <!-- 3. Diary Button -->
-                <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                                            <Border Grid.Row="1" Grid.Column="0" ClassId="2" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color2}" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnAnswerTapped"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[2]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
 
-                <!-- 4. Stats Button -->
-                <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                                            <Border Grid.Row="1" Grid.Column="1" ClassId="3" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color3}" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnAnswerTapped"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[3]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
 
-                <!-- 5. Profile Button -->
-                <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-            </Grid>
-        </Border>
+                    <Button Text="GET RESULTS" 
+                            Clicked="OnSubmitClicked"
+                            BackgroundColor="Cyan"
+                            TextColor="MidnightBlue"
+                            FontAttributes="Bold"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            Margin="0,10,0,30"/>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+                <Grid ColumnDefinitions="*,*,*,*,*">
+                    <Button Grid.Column="0" ImageSource="nav_community.png" Clicked="OnNavTapped" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="1" ImageSource="nav_list.png" Clicked="OnNavTapped" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="2" ImageSource="nav_diary.png" Clicked="OnNavTapped" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="3" ImageSource="nav_graph.png" Clicked="OnNavTapped" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="4" ImageSource="nav_profile.png" Clicked="OnNavTapped" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

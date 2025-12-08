@@ -1,0 +1,106 @@
+is_global = true
+build_property.PropertyChangedAnalyzerConfiguration = 
+build_property.TargetFramework = net8.0-maccatalyst
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = Mental_Health_Wellness_Tracker
+build_property.ProjectDir = C:\Users\User\Source\Repos\Mental-Health-Wellness-Tracker\Mental Health Wellness Tracker\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/AnalyticPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.AnalyticPage.xaml
+build_metadata.AdditionalFiles.TargetPath = AnalyticPage.xaml
+build_metadata.AdditionalFiles.RelativePath = AnalyticPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/App.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.App.xaml
+build_metadata.AdditionalFiles.TargetPath = App.xaml
+build_metadata.AdditionalFiles.RelativePath = App.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/AppShell.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.AppShell.xaml
+build_metadata.AdditionalFiles.TargetPath = AppShell.xaml
+build_metadata.AdditionalFiles.RelativePath = AppShell.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/AssessmentDetailPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.AssessmentDetailPage.xaml
+build_metadata.AdditionalFiles.TargetPath = AssessmentDetailPage.xaml
+build_metadata.AdditionalFiles.RelativePath = AssessmentDetailPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/AssessmentPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.AssessmentPage.xaml
+build_metadata.AdditionalFiles.TargetPath = AssessmentPage.xaml
+build_metadata.AdditionalFiles.RelativePath = AssessmentPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/CommunityPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.CommunityPage.xaml
+build_metadata.AdditionalFiles.TargetPath = CommunityPage.xaml
+build_metadata.AdditionalFiles.RelativePath = CommunityPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/ForgotPasswordPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.ForgotPasswordPage.xaml
+build_metadata.AdditionalFiles.TargetPath = ForgotPasswordPage.xaml
+build_metadata.AdditionalFiles.RelativePath = ForgotPasswordPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/MainPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.MainPage.xaml
+build_metadata.AdditionalFiles.TargetPath = MainPage.xaml
+build_metadata.AdditionalFiles.RelativePath = MainPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/ProfilePage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.ProfilePage.xaml
+build_metadata.AdditionalFiles.TargetPath = ProfilePage.xaml
+build_metadata.AdditionalFiles.RelativePath = ProfilePage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/ProfilePictureViewPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.ProfilePictureViewPage.xaml
+build_metadata.AdditionalFiles.TargetPath = ProfilePictureViewPage.xaml
+build_metadata.AdditionalFiles.RelativePath = ProfilePictureViewPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/Resources/Styles/Colors.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.Resources.Styles.Colors.xaml
+build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Colors.xaml
+build_metadata.AdditionalFiles.RelativePath = Resources\Styles\Colors.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/Resources/Styles/Styles.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.Resources.Styles.Styles.xaml
+build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Styles.xaml
+build_metadata.AdditionalFiles.RelativePath = Resources\Styles\Styles.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/SignUpPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.SignUpPage.xaml
+build_metadata.AdditionalFiles.TargetPath = SignUpPage.xaml
+build_metadata.AdditionalFiles.RelativePath = SignUpPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/SignUpSuccessPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.SignUpSuccessPage.xaml
+build_metadata.AdditionalFiles.TargetPath = SignUpSuccessPage.xaml
+build_metadata.AdditionalFiles.RelativePath = SignUpSuccessPage.xaml
+
+[C:/Users/User/Source/Repos/Mental-Health-Wellness-Tracker/Mental Health Wellness Tracker/WriteDiaryPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Mental_Health_Wellness_Tracker.WriteDiaryPage.xaml
+build_metadata.AdditionalFiles.TargetPath = WriteDiaryPage.xaml
+build_metadata.AdditionalFiles.RelativePath = WriteDiaryPage.xaml

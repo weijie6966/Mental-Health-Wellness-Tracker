@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Mental Health Wellness Tracker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+f9933533b74377ce0793a20db13dc2dfc1bdd383")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+ca7c5e6aaf6c50f2bde097da5aeaf8bc923ed589")]
 [assembly: System.Reflection.AssemblyProductAttribute("Mental Health Wellness Tracker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Mental Health Wellness Tracker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

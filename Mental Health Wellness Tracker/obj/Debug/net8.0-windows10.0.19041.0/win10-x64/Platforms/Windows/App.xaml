@@ -1,0 +1,9 @@
+﻿<maui:MauiWinUIApplication
+    x:Class="Mental_Health_Wellness_Tracker.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:maui="using:Microsoft.Maui"
+    xmlns:local="using:Mental_Health_Wellness_Tracker.WinUI">
+
+</maui:MauiWinUIApplication>
+

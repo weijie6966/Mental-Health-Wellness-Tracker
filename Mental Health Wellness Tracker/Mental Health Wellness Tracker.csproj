@@ -68,40 +68,40 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="SignUpPage.xaml.cs">
+	  <Compile Update="Views\SignUpPage.xaml.cs">
 	    <DependentUpon>SignUpPage.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="AnalyticPage.xaml">
+	  <MauiXaml Update="Views\AnalyticPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="AssessmentDetailPage.xaml">
+	  <MauiXaml Update="Views\AssessmentDetailPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="AssessmentPage.xaml">
+	  <MauiXaml Update="Views\AssessmentPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="CommunityPage.xaml">
+	  <MauiXaml Update="Views\CommunityPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="ForgotPasswordPage.xaml">
+	  <MauiXaml Update="Views\ForgotPasswordPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="ProfilePage.xaml">
+	  <MauiXaml Update="Views\ProfilePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="ProfilePictureViewPage.xaml">
+	  <MauiXaml Update="Views\ProfilePictureViewPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="SignUpPage.xaml">
+	  <MauiXaml Update="Views\SignUpPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="SignUpSuccessPage.xaml">
+	  <MauiXaml Update="Views\SignUpSuccessPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="WriteDiaryPage.xaml">
+	  <MauiXaml Update="Views\WriteDiaryPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

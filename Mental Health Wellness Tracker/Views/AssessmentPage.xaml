@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:Mental_Health_Wellness_Tracker.Models"
+             xmlns:vm="clr-namespace:Mental_Health_Wellness_Tracker.ViewModels"
+             x:Class="Mental_Health_Wellness_Tracker.AssessmentPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <ContentPage.BindingContext>
+        <vm:AssessmentViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="TextOrange">#FF4500</Color>
+            <Color x:Key="ActiveNavColor">#689FBD</Color>
+            <Color x:Key="AnswerBorderColor">White</Color>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
+
+        <Grid RowDefinitions="*, 80">
+
+            <ScrollView Grid.Row="0">
+                <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
+
+                    <Label Text="ASSESSMENT" FontFamily="BrushFont" 
+                           FontSize="35" TextColor="Cyan" HorizontalOptions="Center" Margin="0,10,0,20"/>
+
+                    <CollectionView ItemsSource="{Binding Questions}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Question">
+
+                                <Border StrokeShape="RoundRectangle 20" BackgroundColor="MidnightBlue" StrokeThickness="0" Padding="20" Margin="0,0,0,20">
+                                    <VerticalStackLayout Spacing="15">
+
+                                        <Label Text="{Binding Text}" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+
+                                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto, Auto" ColumnSpacing="15" RowSpacing="15">
+
+                                            <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color0}" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer 
+                                                        Command="{Binding AnswerTappedCommand}"
+                                                        CommandParameter="0"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[0]}" InputTransparent="True" 
+                                                       TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
+
+                                            <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color1}" Stroke="{StaticResource AnswerBorderColor}" 
+                                                    StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer 
+                                                        Command="{Binding AnswerTappedCommand}"
+                                                        CommandParameter="1"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[1]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
+
+                                            <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color2}" 
+                                                    Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer 
+                                                        Command="{Binding AnswerTappedCommand}"
+                                                        CommandParameter="2"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[2]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
+
+                                            <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color3}" 
+                                                    Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer 
+                                                        Command="{Binding AnswerTappedCommand}"
+                                                        CommandParameter="3"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Answers[3]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                            </Border>
+                                        </Grid>
+
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <Button Text="GET RESULTS" 
+                            Command="{Binding SubmitCommand}"
+                            BackgroundColor="Cyan"
+                            TextColor="MidnightBlue"
+                            FontAttributes="Bold"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            Margin="0,10,0,30"/>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+                <Grid ColumnDefinitions="*,*,*,*,*">
+                    <Button Grid.Column="0" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="1" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="2" ImageSource="nav_diary.png" Command="{Binding NavigateCommand}" CommandParameter="Diary" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" 
+                            HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="3" ImageSource="nav_graph.png" Command="{Binding NavigateCommand}" CommandParameter="Stats" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                    <Button Grid.Column="4" ImageSource="nav_profile.png" Command="{Binding NavigateCommand}" CommandParameter="Profile" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

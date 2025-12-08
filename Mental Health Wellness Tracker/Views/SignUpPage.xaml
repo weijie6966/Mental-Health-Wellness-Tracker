@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Mental_Health_Wellness_Tracker.ViewModels"
+             x:Class="Mental_Health_Wellness_Tracker.SignUpPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <ContentPage.BindingContext>
+        <vm:SignUpViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="InputGray">#F0F0F0</Color>
+            <Color x:Key="PrimaryPurple">#8A4FFF</Color>
+            <Color x:Key="TextOrange">#FF4500</Color>
+            <Color x:Key="TextTeal">#008080</Color>
+            <Color x:Key="TextCyan">#00E5FF</Color>
+
+            <Style x:Key="SocialButtonStyle" TargetType="Border">
+                <Setter Property="StrokeShape" Value="RoundRectangle 30"/>
+                <Setter Property="BackgroundColor" Value="#E0E0E0"/>
+                <Setter Property="StrokeThickness" Value="0"/>
+                <Setter Property="HeightRequest" Value="55"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
+
+        <ScrollView>
+            <VerticalStackLayout Spacing="0" Padding="20,40,20,30" VerticalOptions="Center">
+
+                <Grid ColumnDefinitions="Auto, *" Margin="0,0,0,30">
+                    <Border Grid.Column="0" StrokeShape="RoundRectangle 25" BackgroundColor="White" HeightRequest="40" WidthRequest="40" VerticalOptions="Start" HorizontalOptions="Start" Margin="0,20,0,0">
+                        <Image Source="back_arrow.png" HeightRequest="20" WidthRequest="20" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding BackCommand}"/>
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="-25" Rotation="-5" HorizontalOptions="Center" Margin="-40,0,0,0">
+                        <Label Text="NEW" FontFamily="BrushFont" FontSize="50" TextColor="{StaticResource TextOrange}" HorizontalOptions="Center" FontAttributes="Bold"/>
+                        <Label Text="USER!" FontFamily="BrushFont" FontSize="60" TextColor="{StaticResource TextTeal}" HorizontalOptions="Center" FontAttributes="Bold" TranslationY="-10"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <VerticalStackLayout Spacing="15">
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="EMAIL" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        <Border StrokeShape="RoundRectangle 30" BackgroundColor="{StaticResource InputGray}" HeightRequest="50" StrokeThickness="0">
+                            <Entry Text="{Binding Email}" Placeholder="" TextColor="Black" Margin="15,0"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="PASSWORD" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        <Border StrokeShape="RoundRectangle 30" BackgroundColor="{StaticResource InputGray}" HeightRequest="50" StrokeThickness="0" Padding="15,0">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Entry x:Name="EntryPassword" 
+                                       Text="{Binding Password}" 
+                                       IsPassword="{Binding IsPasswordEntryHidden}"
+                                       Grid.Column="0" Placeholder="" 
+                                       TextColor="Black" 
+                                       VerticalOptions="Center"/>
+                                <ImageButton x:Name="BtnTogglePassword" 
+                                             Command="{Binding TogglePasswordCommand}"
+                                             Source="{Binding TogglePasswordImageSource}" 
+                                             Grid.Column="1" HeightRequest="25" 
+                                             WidthRequest="25" VerticalOptions="Center" 
+                                             BackgroundColor="Transparent"/>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="CONFIRM PASSWORD" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        <Border StrokeShape="RoundRectangle 30" BackgroundColor="{StaticResource InputGray}" HeightRequest="50" StrokeThickness="0" Padding="15,0">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Entry x:Name="EntryConfirmPassword" 
+                                       Text="{Binding ConfirmPassword}"
+                                       IsPassword="{Binding IsConfirmPasswordEntryHidden}" 
+                                       Grid.Column="0" Placeholder="" 
+                                       TextColor="Black" 
+                                       VerticalOptions="Center"/>
+                                <ImageButton x:Name="BtnToggleConfirmPassword" 
+                                             Command="{Binding ToggleConfirmPasswordCommand}"
+                                             Source="{Binding ToggleConfirmPasswordImageSource}" 
+                                             Grid.Column="1" HeightRequest="25" 
+                                             WidthRequest="25" VerticalOptions="Center" 
+                                             BackgroundColor="Transparent"/>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Button Text="SIGN UP" 
+                            Command="{Binding SignUpCommand}"
+                            BackgroundColor="{StaticResource PrimaryPurple}" 
+                            TextColor="White" 
+                            FontAttributes="Bold" 
+                            CornerRadius="25" 
+                            HeightRequest="50" 
+                            WidthRequest="180" 
+                            Margin="0,15,0,30" 
+                            HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout>
+                    <Border Style="{StaticResource SocialButtonStyle}">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Grid.Column="0" Text="CONTINUE WITH GOOGLE" TextColor="Black" FontAttributes="Bold" VerticalOptions="Center" FontSize="12"/>
+                            <Image Grid.Column="1" Source="google_icon.png" HeightRequest="24" WidthRequest="24"/>
+                        </Grid>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SocialLoginCommand}" CommandParameter="Google"/>
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <Border Style="{StaticResource SocialButtonStyle}">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Grid.Column="0" Text="CONTINUE WITH FACEBOOK" TextColor="Black" FontAttributes="Bold" VerticalOptions="Center" FontSize="12"/>
+                            <Image Grid.Column="1" Source="fb_icon.png" HeightRequest="24" WidthRequest="24"/>
+                        </Grid>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SocialLoginCommand}" CommandParameter="Facebook"/>
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <Border Style="{StaticResource SocialButtonStyle}">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Grid.Column="0" Text="CONTINUE WITH APPLE" TextColor="Black" FontAttributes="Bold" VerticalOptions="Center" FontSize="12"/>
+                            <Image Grid.Column="1" Source="apple_icon.png" HeightRequest="24" WidthRequest="24"/>
+                        </Grid>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SocialLoginCommand}" CommandParameter="Apple"/>
+                        </Border.GestureRecognizers>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Label HorizontalOptions="Center" Margin="0,20,0,0">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Forgot Password? " TextColor="White" FontSize="12"/>
+                            <Span Text="Tap Here!" TextColor="{StaticResource TextCyan}" FontAttributes="Bold" FontSize="12"/>
+                        </FormattedString>
+                    </Label.FormattedText>
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding BackCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

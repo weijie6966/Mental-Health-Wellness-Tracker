@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker;
+using Mental_Health_Wellness_Tracker.Views;
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class ProfileViewModel : ViewModelBase
     {
+        // Fody automatically handles INPC for these properties
         public string Username { get; set; }
         public string Bio { get; set; }
         public ImageSource ProfileAvatarSource { get; set; }
@@ -22,6 +24,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand ViewProfilePictureCommand { get; }
         public ICommand ToggleMenuCommand { get; }
         public ICommand NavigateCommand { get; }
+        public ICommand ContactUsCommand { get; } // <-- NEW COMMAND
 
         // Constructor and Initialization
         public ProfileViewModel()
@@ -35,17 +38,29 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             ViewProfilePictureCommand = new RelayCommand(async _ => await OnViewProfileClicked());
             ToggleMenuCommand = new RelayCommand(OnToggleMenuClicked);
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
+            ContactUsCommand = new RelayCommand(async _ => await OnContactUsClicked()); // <-- INITIALIZE
         }
 
-        // --- Logic (Moved from ProfilePage.xaml.cs) ---
+        // --- NEW LOGIC ---
+
+        private async Task OnContactUsClicked()
+        {
+            // Navigates to the ContactUsPage located in the Views folder
+            await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ContactUsPage());
+        }
+
+        // --- Existing Logic ---
 
         private void LoadProfileData()
         {
+            // Load text data
             Username = Preferences.Get("UsernameKey", "New User");
             Bio = Preferences.Get("BioKey", "Tell us about yourself.");
 
+            // Load saved image path
             string savedImagePath = Preferences.Get("ProfileImagePath", string.Empty);
 
+            // Set default or saved image
             if (!string.IsNullOrEmpty(savedImagePath) && File.Exists(savedImagePath))
             {
                 ProfileAvatarSource = ImageSource.FromFile(savedImagePath);
@@ -61,7 +76,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             Preferences.Set("UsernameKey", Username);
             Preferences.Set("BioKey", Bio);
 
-            await Application.Current.MainPage.DisplayAlert("Success", "Profile updated successfully!", "OK");
+            await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Success", "Profile updated successfully!", "OK");
         }
 
         private async Task OnChangeProfileClicked()
@@ -97,7 +112,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Application.Current.MainPage.DisplayAlert("Error", $"Could not pick image: {ex.Message}", "OK");
+                await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Error", $"Could not pick image: {ex.Message}", "OK");
             }
         }
 
@@ -113,19 +128,21 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             string currentImagePath = Preferences.Get("ProfileImagePath", "nav_profile.png");
 
             // Navigate to the ProfilePictureViewPage, passing the path.
-            await Application.Current.MainPage.Navigation.PushAsync(new ProfilePictureViewPage(currentImagePath));
+            await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ProfilePictureViewPage(currentImagePath));
         }
 
         private async Task OnLogoutClicked()
         {
-            await Application.Current.MainPage.DisplayAlert("Logout", "You have been logged out.", "OK");
-            await Application.Current.MainPage.Navigation.PopToRootAsync();
+            await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Logout", "You have been logged out.", "OK");
+            // Use PopToRootAsync to return to the root (Login) screen
+            await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PopToRootAsync();
         }
 
         private async Task OnNavTapped(string destination)
         {
             if (destination == null) return;
 
+            // Map string command parameter to Page instance (using simple push/pop model)
             Page nextPage = destination switch
             {
                 "Community" => new CommunityPage(),
@@ -137,7 +154,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
             if (nextPage != null)
             {
-                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
+                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(nextPage);
             }
         }
     }

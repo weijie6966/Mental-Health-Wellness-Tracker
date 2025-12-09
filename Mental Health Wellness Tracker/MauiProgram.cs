@@ -2,6 +2,7 @@
 using Mental_Health_Wellness_Tracker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Hosting;
+using Mental_Health_Wellness_Tracker.Views;
 
 public static class MauiProgram
 {
@@ -14,6 +15,8 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("BrushFont.ttf", "BrushFont");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Comfortaa-Regular.ttf", "ComfortaaRegular");
             })
             .RegisterPagesAndViewModels();
 
@@ -36,6 +39,9 @@ public static class MauiProgram
         builder.Services.AddTransient<AssessmentViewModel>();
         builder.Services.AddTransient<AnalyticViewModel>();      // <-- CONVERTED
         builder.Services.AddTransient<AssessmentDetailViewModel>(); // <-- CONVERTED
+        
+        //new
+        builder.Services.AddTransient<ContactUsViewModel>();
 
         // Register other existing Pages (for use in navigation commands)
         builder.Services.AddTransient<MainPage>();
@@ -49,6 +55,10 @@ public static class MauiProgram
         builder.Services.AddTransient<ProfilePage>();
         builder.Services.AddTransient<ProfilePictureViewPage>();
         builder.Services.AddTransient<AssessmentDetailPage>();
+
+        //new
+        builder.Services.AddTransient<ContactUsPage>();
+
 
         return builder;
     }

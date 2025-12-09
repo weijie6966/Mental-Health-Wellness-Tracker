@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Mental_Health_Wellness_Tracker.ViewModels"
+             x:Class="Mental_Health_Wellness_Tracker.Views.ContactUsPage"
+             Title="Contact Us"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#0E4D5A">
+
+    <ContentPage.BindingContext>
+        <vm:ContactUsViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="PrimaryBlue">#008080</Color>
+            <Color x:Key="HighlightTeal">#00CED1</Color>
+            <Color x:Key="AccentGold">#FFD700</Color>
+
+            <Style TargetType="Label" x:Key="StaticTextStyle">
+                <Setter Property="TextColor" Value="White"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="FontFamily" Value="ComfortaaRegular"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*, Auto">
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="25" Padding="30,40,30,30">
+
+                <Label Text="SUPPORT &amp; CARE" 
+                       FontSize="26"
+                       TextColor="#F0F0F0" 
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,10"/>
+
+                <Label Text="Your well-being is our priority. Contact us for assistance."
+                       TextColor="LightGray"
+                       FontSize="15"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,10"/>
+
+                <Border StrokeShape="RoundRectangle 12" 
+                        BackgroundColor="#20FFFFFF" 
+                        StrokeThickness="1" 
+                        Stroke="{StaticResource PrimaryBlue}" 
+                        Padding="20"
+                        HorizontalOptions="Center"
+                        Margin="0, 10, 0, 10">
+                    <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
+
+                        <Border StrokeShape="RoundRectangle 30" 
+                                Stroke="{StaticResource HighlightTeal}" 
+                                StrokeThickness="2"
+                                HeightRequest="60" 
+                                WidthRequest="60" 
+                                HorizontalOptions="Start"
+                                VerticalOptions="Center">
+                            <Image Source="counsellor.png" 
+                                   Aspect="AspectFill"
+                                   HeightRequest="60" 
+                                   WidthRequest="60">
+                                <Image.Clip>
+                                    <EllipseGeometry Center="30,30" RadiusX="30" RadiusY="30"/>
+                                </Image.Clip>
+                            </Image>
+                        </Border>
+
+                        <VerticalStackLayout Spacing="0">
+                            <Label Text="Kevin Wong" 
+                                   TextColor="White" 
+                                   FontSize="20"/>
+                            <Label Text="Counsellor" 
+                                   TextColor="{StaticResource HighlightTeal}" 
+                                   FontSize="16"/>
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </Border>
+                
+                <Border StrokeShape="RoundRectangle 12" 
+                        BackgroundColor="#20FFFFFF" 
+                        StrokeThickness="1" 
+                        Stroke="{StaticResource PrimaryBlue}" 
+                        Padding="15">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="✉️ Email Support" TextColor="{StaticResource HighlightTeal}" FontFamily="OpenSansSemibold" FontSize="17"/>
+
+                        <Label Text="{Binding EmailAddress}" TextColor="Snow"> </Label>
+
+                        <Label Text="{Binding SecondaryEmailAddress}" TextColor="Snow"> </Label>
+
+                        <Button Text="GMAIL" 
+                                Command="{Binding OpenLinkCommand}"
+                                CommandParameter="{Binding GmailUrl}"
+                                BackgroundColor="{StaticResource AccentGold}" 
+                                TextColor="#0E4D5A" 
+                                CornerRadius="8" 
+                                HeightRequest="45"
+                                FontFamily="OpenSansSemibold"
+                                Margin="0, 5, 0, 0"/>
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border StrokeShape="RoundRectangle 12" 
+                        BackgroundColor="#20FFFFFF" 
+                        StrokeThickness="1" 
+                        Stroke="{StaticResource PrimaryBlue}" 
+                        Padding="15">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="☎️ Urgent Helpline" TextColor="{StaticResource HighlightTeal}" FontFamily="OpenSansSemibold" FontSize="17"/>
+
+                        <Label Text="{Binding PhoneNumber}" TextColor="Snow"> </Label>
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border StrokeShape="RoundRectangle 12" 
+                        BackgroundColor="#20FFFFFF" 
+                        StrokeThickness="1" 
+                        Stroke="{StaticResource PrimaryBlue}" 
+                        Padding="15">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="🏢 Office Location" TextColor="{StaticResource HighlightTeal}" FontFamily="OpenSansSemibold" FontSize="17"/>
+
+                        <Label Text="{Binding AddressLine1}" Style="{StaticResource StaticTextStyle}"/>
+                        <Label Text="{Binding AddressLine2}" Style="{StaticResource StaticTextStyle}"/>
+
+                        <Button Text="DETAIL LOCATION" 
+                                Command="{Binding OpenMapCommand}"
+                                BackgroundColor="{StaticResource PrimaryBlue}" 
+                                TextColor="White" 
+                                CornerRadius="8" 
+                                HeightRequest="45"
+                                FontFamily="OpenSansSemibold"
+                                Margin="0, 10, 0, 0"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Button Text="MORE CONTACT OPTIONS (Linktree)" 
+                        Command="{Binding OpenLinkCommand}"
+                        CommandParameter="{Binding LinktreeUrl}"
+                        BackgroundColor="{StaticResource AccentGold}" 
+                        TextColor="#0E4D5A" 
+                        CornerRadius="10" 
+                        HeightRequest="50"
+                        FontFamily="OpenSansSemibold"
+                        Margin="0, 10, 0, 0"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="1" BackgroundColor="#15FFFFFF" Padding="20, 10" StrokeThickness="0">
+            <Button Text="BACK TO PREVIOUS PAGE" 
+                    Command="{Binding BackCommand}" 
+                    BackgroundColor="{StaticResource PrimaryBlue}" 
+                    TextColor="White" 
+                    CornerRadius="10" 
+                    HeightRequest="50"
+                    FontFamily="OpenSansSemibold"/>
+        </Border>
+
+    </Grid>
+</ContentPage>

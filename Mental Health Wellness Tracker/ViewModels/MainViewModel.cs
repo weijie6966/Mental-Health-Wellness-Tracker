@@ -61,7 +61,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
             if (Email == storedEmail && Password == storedPassword)
             {
-                await Application.Current.MainPage.Navigation.PushAsync(new WriteDiaryPage());
+                await Application.Current.MainPage.Navigation.PushAsync(new ProfilePage());
             }
             else
             {

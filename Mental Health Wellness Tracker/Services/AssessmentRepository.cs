@@ -33,15 +33,57 @@ namespace Mental_Health_Wellness_Tracker.Services
             // Leave the constructor empty for now; place the initialization logic in InitAsync.
         }
 
+        //private async Task InitAsync()
+        //{
+        //    if (_database != null)
+        //        return;
+
+        //    // Initialize the SQLite connection
+        //    var dbPath = Path.Combine(FileSystem.AppDataDirectory, "MentalHealth.db3");
+        //    _database = new SQLiteAsyncConnection(dbPath);
+
+        //    // Create tables if they don't exist
+        //    // Create AssessmentResult table for storing user assessment results
+        //    await _database.CreateTableAsync<AssessmentResult>();
+        //    // Create AssessmentQuestion table for question bank
+        //    await _database.CreateTableAsync<AssessmentQuestion>();
+        //    // Create DiaryEntry table for diary entries
+        //    await _database.CreateTableAsync<DiaryEntry>();
+        //    // Create UserProfile table for user profiles
+        //    await _database.CreateTableAsync<UserProfile>();
+        //    // Create LocalDiaryEntry table for local diary storage
+        //    await _database.CreateTableAsync<LocalDiaryEntry>();
+
+        //    // Data Seeding: If the question bank is empty, we automatically fill it with default questions.
+        //    if (await _database.Table<AssessmentQuestion>().CountAsync() == 0)
+        //    {
+        //        await SeedQuestionsAsync();
+        //    }
+
+        //    // Initialize Firestore SDK
+        //    try
+        //    {
+        //        _firestoreDb = FirestoreDb.Create(ProjectId);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine($"Firestore Initialization Warning: {ex.Message}");
+        //    }
+        //}
+
         private async Task InitAsync()
         {
-            if (_database != null)
-                return;
+            // 1. Initialize connection: Only create a connection if it is empty
+            if (_database == null)
+            {
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "MentalHealth.db3");
+                _database = new SQLiteAsyncConnection(dbPath);
+            }
 
-            // Initialize the SQLite connection
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "MentalHealth.db3");
-            _database = new SQLiteAsyncConnection(dbPath);
-
+            // The current logic is that the following code will run every time InitAsync is called,
+            // regardless of whether a database connection already exists.
+            // SQLite will automatically check and create the table if it doesn't exist.
+            // If it already exists, it will be skipped. This is safe.
             // Create tables if they don't exist
             // Create AssessmentResult table for storing user assessment results
             await _database.CreateTableAsync<AssessmentResult>();
@@ -54,16 +96,19 @@ namespace Mental_Health_Wellness_Tracker.Services
             // Create LocalDiaryEntry table for local diary storage
             await _database.CreateTableAsync<LocalDiaryEntry>();
 
-            // Data Seeding: If the question bank is empty, we automatically fill it with default questions.
+            // 2. Data Seed: Fill with the default question(if the question bank is empty)
             if (await _database.Table<AssessmentQuestion>().CountAsync() == 0)
             {
                 await SeedQuestionsAsync();
             }
 
-            // Initialize Firestore SDK
+            // 3. Initialize the Firestore SDK(remain unchanged)
             try
             {
-                _firestoreDb = FirestoreDb.Create(ProjectId);
+                if (_firestoreDb == null) // Add a simple check to prevent duplicate creation
+                {
+                    _firestoreDb = FirestoreDb.Create(ProjectId);
+                }
             }
             catch (Exception ex)
             {
@@ -72,18 +117,18 @@ namespace Mental_Health_Wellness_Tracker.Services
         }
 
         // Diary core functions
-        // 核心功能：添加日记 (离线优先 + REST API 上传)
+        // Core functionality: Add diary entries (offline preferred + REST API upload)
         public async Task AddDiaryEntryAsync(LocalDiaryEntry localEntry)
         {
             await InitAsync();
 
-            // 1. D步骤: 先保存到本地 SQLite (离线保护)
-            // 无论有没有网，先存下来，保证数据不丢
+            // Step 1: First, save to local SQLite (offline protection)
+            // Whether you have internet access or not, save it first to ensure your data isn't lost
             localEntry.IsSynced = false;
             await _database.InsertAsync(localEntry);
 
-            // 2. 检查网络
-            // 如果没网，或者没有 Token，就到此为止 (只存本地)
+            // Step 2： Check the network
+            // If there is no internet connection or no token, this is the end (local storage only)
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
                 return;
 
@@ -116,59 +161,59 @@ namespace Mental_Health_Wellness_Tracker.Services
                         }
                     }
                 }
-                // 3. 准备 REST API 请求
+                // Step 3: Prepare the REST API request
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                // Firestore REST API 创建文档的 URL
+                // The URL for creating a document using the Firestore REST API
                 string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries?key={WebApiKey}";
 
-                // 4. A步骤: 构建数据包 (Payload)
-                // Firestore REST API 要求特殊的 JSON 格式: { "fields": { "key": { "type": "value" } } }
+                // Step 4: Construct the payload
+                // The Firestore REST API requires a specific JSON format: { "fields": { "key": { "type": "value" } } }
                 var firestorePayload = new
                 {
                     fields = new
                     {
-                        // 字符串类型用 stringValue
+                        // String types use stringValue
                         userId = new { stringValue = localEntry.UserId },
                         userEmail = new { stringValue = localEntry.UserEmail ?? "" }, // 防止 null
                         username = new { stringValue = localEntry.Username ?? "Anonymous" },
                         content = new { stringValue = localEntry.Content },
 
-                        // 心情数据
+                        // Mood data
                         moodName = new { stringValue = localEntry.MoodName },
                         moodEmoji = new { stringValue = localEntry.MoodEmoji },
 
-                        // 注意：整数在 Firestore REST API 中必须转为字符串传给 integerValue
+                        // Note: Integers must be converted to strings before being passed to integerValue in the Firestore REST API
                         moodScore = new { integerValue = localEntry.MoodScore.ToString() },
 
                         // This will now send the actual cloud link (if the upload was successful)
                         imgUrl = new { stringValue = localEntry.ImgUrl ?? "" },
 
-                        // 时间戳使用 timestampValue (ISO 8601 格式)
+                        // Timestamps use timestampValue (ISO 8601 format)
                         dateCreated = new { timestampValue = localEntry.DateCreated.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
                     }
                 };
 
-                // 序列化 JSON
+                // Serializing JSON
                 var jsonContent = JsonSerializer.Serialize(firestorePayload);
                 var httpContent = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
-                // 5. C步骤: 发送 POST 请求上传云端
+                // Step 5: Send a POST request to upload to the cloud
                 var response = await client.PostAsync(url, httpContent);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // 6. B步骤: 上传成功，更新本地状态
+                    // Step 6: Upload successful, update local status
 
-                    // 解析响应以获取 Firestore 生成的 ID
-                    // 响应中包含 "name": "projects/.../documents/diary_entries/文档ID"
+                    // Parse the response to obtain the ID generated by Firestore
+                    // The response contains "name": "projects/.../documents/diary_entries/documentID"
                     var responseBody = await response.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(responseBody);
                     if (doc.RootElement.TryGetProperty("name", out var nameElement))
                     {
                         var path = nameElement.GetString();
-                        // 截取最后一部分作为 ID
+                        // Extract the last part as the ID
                         var firestoreId = path.Split('/').Last();
                         localEntry.FirestoreId = firestoreId;
                     }
@@ -319,10 +364,10 @@ namespace Mental_Health_Wellness_Tracker.Services
             }
         }
 
-        // ✅ 核心新功能：从云端下载历史记录
+        // Download history from the cloud
         public async Task SyncAssessmentFromCloudAsync(string userId)
         {
-            // 1. 检查网络和 Token
+            // 1. Check network and token
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet) return;
             var token = await SecureStorage.GetAsync("auth_token");
             if (string.IsNullOrEmpty(token)) return;
@@ -330,7 +375,7 @@ namespace Mental_Health_Wellness_Tracker.Services
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // 2. 请求 Firestore 获取 assessments 集合中的所有文档
+            // 2. Request Firestore to retrieve all documents from the assessments collection
             string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/assessments?key={WebApiKey}";
 
             try
@@ -345,47 +390,47 @@ namespace Mental_Health_Wellness_Tracker.Services
                 var jsonString = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(jsonString);
 
-                // 3. 解析返回的文档列表
+                // 3. Parse the returned list of documents
                 if (doc.RootElement.TryGetProperty("documents", out JsonElement documents))
                 {
-                    await InitAsync(); // 确保本地数据库已就绪
+                    await InitAsync(); // Ensure the local database is ready
 
                     foreach (var docElement in documents.EnumerateArray())
                     {
-                        // 3.1 获取文档 ID (FirestoreId)
+                        // 3.1 Obtain the document ID (FirestoreId)
                         // path 格式: "projects/.../databases/(default)/documents/assessments/DOCUMENT_ID"
                         string path = docElement.GetProperty("name").GetString();
                         string firestoreId = path.Split('/').Last();
 
-                        // 3.2 解析字段
+                        // 3.2 Parsing Fields
                         var fields = docElement.GetProperty("fields");
 
-                        // 辅助函数：安全读取 Firestore 字符串字段
+                        // Helper function: Securely read Firestore string fields
                         string GetStr(string key) =>
                             fields.TryGetProperty(key, out var f) && f.TryGetProperty("stringValue", out var v) ? v.GetString() : "";
 
-                        // 辅助函数：安全读取 Firestore 整数字段
+                        // Helper function: Safely read Firestore integer fields
                         int GetInt(string key) =>
                             fields.TryGetProperty(key, out var f) && f.TryGetProperty("integerValue", out var v) && int.TryParse(v.GetString(), out int i) ? i : 0;
 
-                        // 检查这条记录是否属于当前用户
+                        // Check if this record belongs to the current user
                         string recordUserId = GetStr("userId");
-                        if (recordUserId != userId) continue; // 不是我的数据，跳过
+                        if (recordUserId != userId) continue; // This is not my data, skip
 
-                        // 3.3 检查本地是否已经存在 (防止重复添加)
+                        // 3.3 Check if it already exists locally (to prevent duplicate additions)
                         var existing = await _database.Table<AssessmentResult>()
                                                       .Where(x => x.FirestoreId == firestoreId)
                                                       .FirstOrDefaultAsync();
-                        if (existing != null) continue; // 本地已有，跳过
+                        if (existing != null) continue; // If it's already available locally, skip this step
 
-                        // 3.4 解析日期
+                        // 3.4 Resolution Date
                         DateTime dateTaken = DateTime.Now;
                         if (fields.TryGetProperty("dateTaken", out var dtField) && dtField.TryGetProperty("timestampValue", out var ts))
                         {
                             DateTime.TryParse(ts.GetString(), out dateTaken);
                         }
 
-                        // 3.5 创建本地对象并保存
+                        // 3.5 Create and save a local object
                         var newLocalResult = new AssessmentResult
                         {
                             FirestoreId = firestoreId,
@@ -395,9 +440,9 @@ namespace Mental_Health_Wellness_Tracker.Services
                             TestType = GetStr("testType"),
                             TotalScore = GetInt("totalScore"),
                             CalculatedResult = GetStr("calculatedResult"),
-                            AnswersJson = GetStr("q_answer"), // 直接把 JSON 字符串存下来
+                            AnswersJson = GetStr("q_answer"), // Save the JSON string directly
                             DateTaken = dateTaken,
-                            IsSynced = true // 既然是从云端下载的，肯定已同步
+                            IsSynced = true // Since it was downloaded from the cloud, it must have been synced
                         };
 
                         await _database.InsertAsync(newLocalResult);

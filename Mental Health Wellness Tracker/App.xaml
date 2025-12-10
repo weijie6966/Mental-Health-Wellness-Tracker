@@ -8,6 +8,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <ResourceDictionary xmlns:converters="clr-namespace:Mental_Health_Wellness_Tracker.Resources.Converters">
+                    <converters:SelectedScoreToColorConverter x:Key="SelectedScoreToColorConverter" />
+                </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

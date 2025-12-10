@@ -1,115 +1,119 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:Mental_Health_Wellness_Tracker.Models"
              xmlns:vm="clr-namespace:Mental_Health_Wellness_Tracker.ViewModels"
-             x:Class="Mental_Health_Wellness_Tracker.AssessmentPage"
-             NavigationPage.HasNavigationBar="False">
+             xmlns:models="clr-namespace:Mental_Health_Wellness_Tracker.Models"
+             x:Class="Mental_Health_Wellness_Tracker.Views.AssessmentPage"
+             Title="Mental Health Assessment"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#0E4D5A">
 
-    <ContentPage.BindingContext>
-        <vm:AssessmentViewModel />
-    </ContentPage.BindingContext>
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <Color x:Key="TextOrange">#FF4500</Color>
-            <Color x:Key="ActiveNavColor">#689FBD</Color>
-            <Color x:Key="AnswerBorderColor">White</Color>
+            <Color x:Key="PrimaryBlue">#008080</Color>
+            <Color x:Key="HighlightTeal">#00CED1</Color>
+            <Color x:Key="AccentGold">#FFD700</Color>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid>
-        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
+    <Grid RowDefinitions="*, Auto" Padding="0">
 
-        <Grid RowDefinitions="*, 80">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="25" Padding="30,40,30,30" HorizontalOptions="FillAndExpand">
 
-            <ScrollView Grid.Row="0">
-                <VerticalStackLayout Spacing="20" Padding="30,30,30,20">
+                <Label Text="Your Assessment"
+                       FontFamily="OpenSansSemibold" 
+                       FontSize="26"
+                       TextColor="#F0F0F0" 
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,10"/>
 
-                    <Label Text="ASSESSMENT" FontFamily="BrushFont" 
-                           FontSize="35" TextColor="Cyan" HorizontalOptions="Center" Margin="0,10,0,20"/>
+                <Label Text="{Binding QuestionCounterDisplay}"
+                       TextColor="{StaticResource HighlightTeal}"
+                       FontSize="16"
+                       HorizontalOptions="Center"/>
 
-                    <CollectionView ItemsSource="{Binding Questions}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:Question">
+                <Border StrokeShape="RoundRectangle 12" 
+                        BackgroundColor="#20FFFFFF" 
+                        StrokeThickness="1" 
+                        Stroke="{StaticResource PrimaryBlue}" 
+                        Padding="25"
+                        Margin="0, 20, 0, 20">
+                    <VerticalStackLayout Spacing="20">
 
-                                <Border StrokeShape="RoundRectangle 20" BackgroundColor="MidnightBlue" StrokeThickness="0" Padding="20" Margin="0,0,0,20">
-                                    <VerticalStackLayout Spacing="15">
+                        <Label Text="{Binding CurrentQuestion.QuestionText}"
+                               TextColor="White"
+                               FontSize="18"
+                               FontFamily="OpenSansRegular"
+                               VerticalOptions="CenterAndExpand"/>
 
-                                        <Label Text="{Binding Text}" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                        <StackLayout Spacing="10">
+                            <Button Text="Not at all (0)" 
+                                    Command="{Binding SelectOptionCommand}" 
+                                    CommandParameter="0"
+                                    BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=0}"
+                                    TextColor="White" 
+                                    CornerRadius="8"/>
+                            <Button Text="Several days (1)" 
+                                    Command="{Binding SelectOptionCommand}" 
+                                    CommandParameter="1"
+                                    BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=1}"
+                                    TextColor="White" 
+                                    CornerRadius="8"/>
+                            <Button Text="More than half the days (2)" 
+                                    Command="{Binding SelectOptionCommand}" 
+                                    CommandParameter="2"
+                                    BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=2}"
+                                    TextColor="White" 
+                                    CornerRadius="8"/>
+                            <Button Text="Nearly every day (3)" 
+                                    Command="{Binding SelectOptionCommand}" 
+                                    CommandParameter="3"
+                                    BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=3}"
+                                    TextColor="White" 
+                                    CornerRadius="8"/>
+                        </StackLayout>
+                    </VerticalStackLayout>
+                </Border>
 
-                                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto, Auto" ColumnSpacing="15" RowSpacing="15">
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="15">
 
-                                            <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color0}" Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                                <Border.GestureRecognizers>
-                                                    <TapGestureRecognizer 
-                                                        Command="{Binding AnswerTappedCommand}"
-                                                        CommandParameter="0"/>
-                                                </Border.GestureRecognizers>
-                                                <Label Text="{Binding Answers[0]}" InputTransparent="True" 
-                                                       TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                            </Border>
+                    <Button Text="PREVIOUS" 
+                            Grid.Column="0"
+                            Command="{Binding PreviousCommand}"
+                            IsVisible="{Binding IsNotFirstQuestion}"
+                            BackgroundColor="{StaticResource PrimaryBlue}" 
+                            TextColor="White" 
+                            CornerRadius="10" 
+                            HeightRequest="50"/>
 
-                                            <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color1}" Stroke="{StaticResource AnswerBorderColor}" 
-                                                    StrokeThickness="2" HeightRequest="60">
-                                                <Border.GestureRecognizers>
-                                                    <TapGestureRecognizer 
-                                                        Command="{Binding AnswerTappedCommand}"
-                                                        CommandParameter="1"/>
-                                                </Border.GestureRecognizers>
-                                                <Label Text="{Binding Answers[1]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                            </Border>
+                    <Button Text="NEXT" 
+                            Grid.Column="1"
+                            Command="{Binding NextCommand}"
+                            IsVisible="{Binding IsNotLastQuestion}"
+                            BackgroundColor="{StaticResource PrimaryBlue}" 
+                            TextColor="White" 
+                            CornerRadius="10" 
+                            HeightRequest="50"/>
 
-                                            <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color2}" 
-                                                    Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                                <Border.GestureRecognizers>
-                                                    <TapGestureRecognizer 
-                                                        Command="{Binding AnswerTappedCommand}"
-                                                        CommandParameter="2"/>
-                                                </Border.GestureRecognizers>
-                                                <Label Text="{Binding Answers[2]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 20" BackgroundColor="{Binding Color3}" 
-                                                    Stroke="{StaticResource AnswerBorderColor}" StrokeThickness="2" HeightRequest="60">
-                                                <Border.GestureRecognizers>
-                                                    <TapGestureRecognizer 
-                                                        Command="{Binding AnswerTappedCommand}"
-                                                        CommandParameter="3"/>
-                                                </Border.GestureRecognizers>
-                                                <Label Text="{Binding Answers[3]}" InputTransparent="True" TextColor="White" VerticalOptions="Center" HorizontalOptions="Center"/>
-                                            </Border>
-                                        </Grid>
-
-                                    </VerticalStackLayout>
-                                </Border>
-                            </DataTemplate>
-
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
-                    <Button Text="GET RESULTS" 
+                    <Button Text="SUBMIT ASSESSMENT" 
+                            Grid.ColumnSpan="2"
                             Command="{Binding SubmitCommand}"
-                            BackgroundColor="Cyan"
-                            TextColor="MidnightBlue"
-                            FontAttributes="Bold"
+                            IsVisible="{Binding IsSubmitVisible}"
+                            BackgroundColor="{StaticResource AccentGold}" 
+                            TextColor="#0E4D5A" 
+                            CornerRadius="10" 
                             HeightRequest="50"
-                            CornerRadius="25"
-                            Margin="0,10,0,30"/>
-
-                </VerticalStackLayout>
-            </ScrollView>
-
-            <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
-                <Grid ColumnDefinitions="*,*,*,*,*">
-                    <Button Grid.Column="0" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                    <Button Grid.Column="1" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                    <Button Grid.Column="2" ImageSource="nav_diary.png" Command="{Binding NavigateCommand}" CommandParameter="Diary" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" 
-                            HeightRequest="55" WidthRequest="55" Padding="10"/>
-                    <Button Grid.Column="3" ImageSource="nav_graph.png" Command="{Binding NavigateCommand}" CommandParameter="Stats" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                    <Button Grid.Column="4" ImageSource="nav_profile.png" Command="{Binding NavigateCommand}" CommandParameter="Profile" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                            FontFamily="OpenSansSemibold"/>
                 </Grid>
-            </Border>
-        </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="1" BackgroundColor="#15FFFFFF" Padding="20, 10" StrokeThickness="0">
+            <Grid ColumnDefinitions="*,*,*,*">
+            </Grid>
+        </Border>
+
     </Grid>
 </ContentPage>

@@ -4,17 +4,23 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
-using Mental_Health_Wellness_Tracker;
+using Mental_Health_Wellness_Tracker.Services;
+using Mental_Health_Wellness_Tracker.Views;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
+        private readonly IAuthService _authService;
+
+        // Data Properties bound to the View
         public string Email { get; set; }
         public string Password { get; set; }
         public bool IsPasswordVisible { get; set; } = false;
 
-        // Computed Properties (uses base.OnPropertyChanged)
+        // Computed Properties (Handle visual changes)
         public string TogglePasswordImageSource => IsPasswordVisible ? "eye_closed.png" : "eye_open.png";
         public bool IsPasswordEntryHidden => !IsPasswordVisible;
 
@@ -23,18 +29,28 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand TogglePasswordCommand { get; }
         public ICommand CreateAccountCommand { get; }
         public ICommand ForgotPasswordCommand { get; }
-        public ICommand SocialLoginCommand { get; }
+        // REMOVED: SocialLoginCommand is deleted
 
-        public MainViewModel()
+        // NEW: Command to handle taps on unimplemented features (social buttons)
+        public ICommand UnimplementedCommand { get; }
+
+        // FIX: Constructor uses Dependency Injection (DI)
+        public MainViewModel(IAuthService authService)
         {
+            _authService = authService;
+
             LoginCommand = new RelayCommand(async _ => await OnLoginClicked());
             TogglePasswordCommand = new RelayCommand(OnTogglePasswordClicked);
-            CreateAccountCommand = new RelayCommand(async _ => await Application.Current.MainPage.Navigation.PushAsync(new SignUpPage()));
-            ForgotPasswordCommand = new RelayCommand(async _ => await Application.Current.MainPage.Navigation.PushAsync(new ForgotPasswordPage()));
-            SocialLoginCommand = new RelayCommand(async parameter => await OnSocialLoginClicked(parameter?.ToString()));
+
+            // FIX: Navigation commands use the DI Helper
+            CreateAccountCommand = new RelayCommand(async _ => await OnNavTapped(nameof(SignUpPage)));
+            ForgotPasswordCommand = new RelayCommand(async _ => await OnNavTapped(nameof(ForgotPasswordPage)));
+
+            // NEW: Initialize the command for unimplemented features
+            UnimplementedCommand = new RelayCommand(async param => await OnUnimplementedClicked(param?.ToString()));
         }
 
-        // --- Logic (Moved from MainPage.xaml.cs) ---
+        // --- Core Authentication Logic ---
 
         private async Task OnLoginClicked()
         {
@@ -44,55 +60,66 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 return;
             }
 
-            if (!IsPasswordValid(Password))
+            // Validation uses the injected service
+            if (!_authService.IsPasswordValid(Password))
             {
                 await Application.Current.MainPage.DisplayAlert("Invalid Input", "Password must contain Upper, Lower, and Number.", "OK");
                 return;
             }
 
-            string storedEmail = Preferences.Get("UserEmail", string.Empty);
-            string storedPassword = Preferences.Get("UserPassword", string.Empty);
+            try
+            {
+                // Login uses the injected service
+                string userId = await _authService.LoginAsync(Email, Password);
 
-            if (string.IsNullOrEmpty(storedEmail))
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "No account found. Please create one.", "OK");
-                return;
-            }
+                // Save essential user ID
+                await SecureStorage.Default.SetAsync("UserId", userId);
 
-            if (Email == storedEmail && Password == storedPassword)
-            {
-                await Application.Current.MainPage.Navigation.PushAsync(new ProfilePage());
+                // Navigate to the next page (ProfilePage) using DI
+                await OnNavTapped(nameof(ProfilePage));
             }
-            else
+            catch (Exception ex)
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Incorrect Credentials.", "Try Again");
+                await Application.Current.MainPage.DisplayAlert("Login Failed", $"Error: {ex.Message}", "Try Again");
             }
         }
+
+        // NEW: Logic for handling taps on unimplemented social buttons (Google, Apple, etc.)
+        private async Task OnUnimplementedClicked(string featureName)
+        {
+            if (string.IsNullOrEmpty(featureName)) return;
+
+            await Application.Current.MainPage.DisplayAlert(
+                "Future Update",
+                $"The {featureName} feature is currently in development and will be available in a future update.",
+                "OK");
+        }
+
+        // --- UI Interaction Logic ---
 
         private void OnTogglePasswordClicked(object parameter)
         {
             IsPasswordVisible = !IsPasswordVisible;
-
-            // Notify the View that the computed properties need updating
             OnPropertyChanged(nameof(TogglePasswordImageSource));
             OnPropertyChanged(nameof(IsPasswordEntryHidden));
         }
 
-        private async Task OnSocialLoginClicked(string provider)
+        // --- DI Navigation Helper ---
+        private async Task OnNavTapped(string destination)
         {
-            await Application.Current.MainPage.DisplayAlert(provider, $"Connecting to {provider}...", "OK");
-            await Task.Delay(1500);
+            if (destination == null) return;
 
-            Preferences.Set("UserEmail", $"{provider.ToLower()}@user.com");
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
 
-            await Application.Current.MainPage.DisplayAlert("Success", $"Successfully logged in with {provider}!", "OK");
+            // Uses reflection to resolve the page type and instance
+            Type pageType = Type.GetType($"Mental_Health_Wellness_Tracker.Views.{destination}");
 
-            await Application.Current.MainPage.Navigation.PushAsync(new WriteDiaryPage());
-        }
-
-        private bool IsPasswordValid(string password)
-        {
-            return password.Any(char.IsUpper) && password.Any(char.IsLower) && password.Any(char.IsDigit);
+            if (pageType != null)
+            {
+                Page nextPage = (Page)services.GetRequiredService(pageType);
+                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
+            }
         }
     }
 }

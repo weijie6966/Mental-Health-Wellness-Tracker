@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Mental Health Wellness Tracker</name>
+    </assembly>
+    <members>
+        <member name="M:Mental_Health_Wellness_Tracker.Services.AuthService.IsPasswordValid(System.String)">
+            <summary>
+            Checks if the provided password meets the application's complexity requirements.
+            (Upper, Lower, and Digit)
+            </summary>
+        </member>
+        <member name="M:Mental_Health_Wellness_Tracker.ViewModels.RelayCommand`1.RaiseCanExecuteChanged">
+            <summary>
+            Manually triggers a re-evaluation of CanExecute.
+            </summary>
+        </member>
+    </members>
+</doc>

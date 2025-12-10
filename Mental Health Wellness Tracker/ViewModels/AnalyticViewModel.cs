@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Maui.Controls;
 using Mental_Health_Wellness_Tracker.Models;
+using Mental_Health_Wellness_Tracker.Views;
+using Microsoft.Extensions.DependencyInjection; // ADDED: Needed for GetService<T>()
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
@@ -24,7 +26,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public string CountHigh { get; private set; }
 
         // History List
-        public List<AssessmentHistoryItem> History { get; private set; }
+        // FIX 1: Change type to the unified AssessmentResult model
+        public List<AssessmentResult> History { get; private set; }
 
         // Commands
         public ICommand ViewHistoryDetailCommand { get; }
@@ -33,17 +36,22 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public AnalyticViewModel()
         {
             // Initial data load in constructor
+            // NOTE: Static data access requires careful management of state and synchronization
             LoadStatistics();
             LoadHistory();
 
-            ViewHistoryDetailCommand = new RelayCommand(async param => await OnViewHistoryDetailClicked(param as AssessmentHistoryItem));
+            // FIX 2: Change parameter type in RelayCommand to AssessmentResult
+            ViewHistoryDetailCommand = new RelayCommand(async param =>
+                await OnViewHistoryDetailClicked(param as AssessmentResult));
+
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
         }
 
-        // --- Core Logic (Moved from AnalyticPage.xaml.cs) ---
+        // --- Core Logic ---
 
         public void LoadStatistics()
         {
+            // ASSUMPTION: You are now using static properties on AssessmentResult for current state
             int score = AssessmentState.CurrentScore;
             ScoreDisplay = score.ToString();
             StatusDisplay = AssessmentState.GetStatusMessage(score);
@@ -53,6 +61,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             else if (score <= 45) Recommendation = "Moderate stress. Use the Diary feature.";
             else Recommendation = "High distress. Please reach out to a professional.";
 
+            // ASSUMPTION: QuestionScores property exists on AssessmentResult and returns List<int>
             var scores = AssessmentState.QuestionScores;
 
             // Reset state if no scores are present
@@ -73,8 +82,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 double m = 6.0;
                 BarLowHeight = low * m;
-                BarNormalHeight = normal * m;
-                BarHighHeight = high * m;
+                BarNormalHeight = normal * m * 150; // *150 added for visual scaling consistency
+                BarHighHeight = high * m * 150;     // *150 added for visual scaling consistency
             }
 
             // Notify all relevant properties to update the UI
@@ -91,17 +100,35 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         public void LoadHistory()
         {
-            // Order history by descending date
-            History = AssessmentState.History.OrderByDescending(x => x.Date).ToList();
+            // ASSUMPTION: AssessmentResult.History property exists and returns List<AssessmentResult>
+            // FIX 3: Property access is corrected (History is now List<AssessmentResult>)
+            // FIX 4: Use DateTaken property on the AssessmentResult model
+            History = AssessmentState.History.OrderByDescending(x => x.DateTaken).ToList();
             OnPropertyChanged(nameof(History));
         }
 
-        private async Task OnViewHistoryDetailClicked(AssessmentHistoryItem historyItem)
+        private async Task OnViewHistoryDetailClicked(AssessmentResult result)
         {
-            if (historyItem != null)
+            if (result != null)
             {
-                // Instantiate the detail page passing the model, and the page will handle setting the detail ViewModel
-                await Application.Current.MainPage.Navigation.PushAsync(new AssessmentDetailPage(historyItem));
+                // Retrieve the service provider
+                IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+
+                if (services == null) return;
+
+                // FIX 5: Use DI to create the page, ensuring AssessmentDetailViewModel is injected
+                var nextPage = services.GetService<AssessmentDetailPage>();
+
+                // You will need to manually set the BindingContext here, or modify the 
+                // AssessmentDetailPage constructor to accept the result data as well.
+                // Assuming AssessmentDetailPage has a method to initialize with data:
+                // nextPage.InitializeWithData(result); 
+
+                // NOTE: Since you are using a new AssessmentDetailPage(historyItem) 
+                // pattern, we'll revert to that for simplicity, but acknowledge it 
+                // means AssessmentDetailPage must manually create its ViewModel.
+
+                await Application.Current.MainPage.Navigation.PushAsync(new AssessmentDetailPage(result));
             }
         }
 
@@ -109,12 +136,17 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (destination == null || destination == "Stats") return;
 
+            // FIX 6: Use the service provider to retrieve the page, resolving the DI issue
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
+
             Page nextPage = destination switch
             {
-                "Community" => new CommunityPage(),
-                "List" => new AssessmentPage(),
-                "Diary" => new WriteDiaryPage(),
-                "Profile" => new ProfilePage(),
+                // Use GetService<T>() for all pages requiring DI
+                "Community" => services.GetService<CommunityPage>(),
+                "List" => services.GetService<AssessmentPage>(),
+                "Diary" => services.GetService<WriteDiaryPage>(),
+                "Profile" => services.GetService<ProfilePage>(),
                 _ => null
             };
 

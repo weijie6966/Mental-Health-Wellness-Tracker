@@ -2,12 +2,9 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Mental_Health_Wellness_Tracker.ViewModels"
-             x:Class="Mental_Health_Wellness_Tracker.CommunityPage"
+             x:Class="Mental_Health_Wellness_Tracker.Views.CommunityPage"
              NavigationPage.HasNavigationBar="False">
 
-    <ContentPage.BindingContext>
-        <vm:CommunityViewModel />
-    </ContentPage.BindingContext>
 
     <ContentPage.Resources>
         <ResourceDictionary>

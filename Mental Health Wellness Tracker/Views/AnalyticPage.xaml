@@ -3,12 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Mental_Health_Wellness_Tracker.ViewModels"
              xmlns:models="clr-namespace:Mental_Health_Wellness_Tracker.Models"
-             x:Class="Mental_Health_Wellness_Tracker.AnalyticPage"
+             x:Class="Mental_Health_Wellness_Tracker.Views.AnalyticPage"
              NavigationPage.HasNavigationBar="False">
-
-    <ContentPage.BindingContext>
-        <vm:AnalyticViewModel />
-    </ContentPage.BindingContext>
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -78,16 +74,16 @@
 
                             <CollectionView ItemsSource="{Binding History}" HeightRequest="300">
                                 <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="models:AssessmentHistoryItem">
+                                    <DataTemplate x:DataType="models:AssessmentResult">
                                         <Border StrokeShape="RoundRectangle 10" BackgroundColor="#20FFFFFF" StrokeThickness="0" Padding="15" Margin="0,0,0,10">
 
                                             <Grid ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
                                                 <Label Grid.Row="0" Grid.Column="0" Text="{Binding TestType}" TextColor="White" FontAttributes="Bold"/>
-                                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding Date, StringFormat='{0:MM/dd}'}" TextColor="LightGray" FontSize="12" HorizontalOptions="End" Margin="0,0,10,0"/>
+                                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding DateTaken, StringFormat='{0:MM/dd}'}" TextColor="LightGray" FontSize="12" HorizontalOptions="End" Margin="0,0,10,0"/>
 
                                                 <Label Grid.Row="1" 
-                                                       Grid.Column="0" Text="{Binding Status}" TextColor="Cyan" FontSize="13" Margin="0,5,0,0"/>
-                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding Score, StringFormat='Score: {0}'}" TextColor="White" FontSize="13" HorizontalOptions="End" Margin="0,5,10,0"/>
+                                                       Grid.Column="0" Text="{Binding CalculatedResult}" TextColor="Cyan" FontSize="13" Margin="0,5,0,0"/>
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalScore, StringFormat='Score: {0}'}" TextColor="White" FontSize="13" HorizontalOptions="End" Margin="0,5,10,0"/>
 
 
                                                 <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" 

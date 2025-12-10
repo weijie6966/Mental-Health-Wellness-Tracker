@@ -1,18 +1,22 @@
 ﻿using Mental_Health_Wellness_Tracker.ViewModels;
 using Microsoft.Maui.Controls;
 
-namespace Mental_Health_Wellness_Tracker
+// Assuming your pages are in the Views namespace
+namespace Mental_Health_Wellness_Tracker.Views
 {
     public partial class MainPage : ContentPage
     {
-        public MainPage()
+        // FIX 1: Remove the parameterless constructor.
+        // FIX 2: Accept the ViewModel via Dependency Injection (DI).
+        public MainPage(MainViewModel viewModel)
         {
             InitializeComponent();
-            // Since the BindingContext is set in MainPage.xaml using <vm:MainViewModel />,
-            // this line is optional but harmless.
-            // this.BindingContext = new MainViewModel(); 
+
+            // FIX 3: Set the BindingContext to the injected instance.
+            this.BindingContext = viewModel;
         }
 
-        // All previous event handlers and fields are now removed.
+        // NOTE: You must also remove the <ContentPage.BindingContext> tag from MainPage.xaml
+        // if you had one, as the BindingContext is now set entirely in the C# code-behind.
     }
 }

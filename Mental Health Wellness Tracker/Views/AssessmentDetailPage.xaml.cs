@@ -7,7 +7,7 @@ namespace Mental_Health_Wellness_Tracker
     public partial class AssessmentDetailPage : ContentPage
     {
         // This constructor MUST accept an AssessmentHistoryItem
-        public AssessmentDetailPage(AssessmentHistoryItem item)
+        public AssessmentDetailPage(AssessmentResult item)
         {
             InitializeComponent();
 

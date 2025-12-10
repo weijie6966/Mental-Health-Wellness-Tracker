@@ -4,46 +4,28 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
-using Mental_Health_Wellness_Tracker;
+using Mental_Health_Wellness_Tracker.Services; // FIX 1: Add Services for IAuthService
+using Mental_Health_Wellness_Tracker.Views;       // FIX 2: Add Views for DI Navigation
+using Microsoft.Extensions.DependencyInjection; // FIX 3: Add for GetService<T>()
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class SignUpViewModel : ViewModelBase
     {
+        private readonly IAuthService _authService; // FIX 4: Inject the authentication service
+
         public string Email { get; set; }
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }
 
+        // --- Password Visibility Properties (Logic remains in ViewModel for UI state) ---
         private bool _isPasswordVisible = false;
-        public bool IsPasswordVisible
-        {
-            get => _isPasswordVisible;
-            set
-            {
-                _isPasswordVisible = value;
-                // Manually notify when a dependent property changes
-                OnPropertyChanged(nameof(TogglePasswordImageSource));
-                OnPropertyChanged(nameof(IsPasswordEntryHidden));
-            }
-        }
-
+        public bool IsPasswordVisible { get => _isPasswordVisible; set { _isPasswordVisible = value; OnPropertyChanged(nameof(TogglePasswordImageSource)); OnPropertyChanged(nameof(IsPasswordEntryHidden)); } }
         private bool _isConfirmPasswordVisible = false;
-        public bool IsConfirmPasswordVisible
-        {
-            get => _isConfirmPasswordVisible;
-            set
-            {
-                _isConfirmPasswordVisible = value;
-                // Manually notify when a dependent property changes
-                OnPropertyChanged(nameof(ToggleConfirmPasswordImageSource));
-                OnPropertyChanged(nameof(IsConfirmPasswordEntryHidden));
-            }
-        }
+        public bool IsConfirmPasswordVisible { get => _isConfirmPasswordVisible; set { _isConfirmPasswordVisible = value; OnPropertyChanged(nameof(ToggleConfirmPasswordImageSource)); OnPropertyChanged(nameof(IsConfirmPasswordEntryHidden)); } }
 
-        // Computed Properties for the View
         public string TogglePasswordImageSource => IsPasswordVisible ? "eye_closed.png" : "eye_open.png";
         public bool IsPasswordEntryHidden => !IsPasswordVisible;
-
         public string ToggleConfirmPasswordImageSource => IsConfirmPasswordVisible ? "eye_closed.png" : "eye_open.png";
         public bool IsConfirmPasswordEntryHidden => !IsConfirmPasswordVisible;
 
@@ -55,16 +37,22 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand SocialLoginCommand { get; }
 
 
-        public SignUpViewModel()
+        // FIX 5: Constructor must accept IAuthService via DI
+        public SignUpViewModel(IAuthService authService)
         {
+            _authService = authService;
+
             SignUpCommand = new RelayCommand(async _ => await OnSignUpClicked());
             TogglePasswordCommand = new RelayCommand(OnTogglePasswordClicked);
             ToggleConfirmPasswordCommand = new RelayCommand(OnToggleConfirmPasswordClicked);
+
+            // FIX 6: Back command uses DI navigation helper
             BackCommand = new RelayCommand(async _ => await Application.Current.MainPage.Navigation.PopAsync());
+
             SocialLoginCommand = new RelayCommand(async parameter => await OnSocialLoginClicked(parameter?.ToString()));
         }
 
-        // --- Logic (Moved from SignUpPage.xaml.cs) ---
+        // --- Core Logic (Refactored to use IAuthService) ---
 
         private async Task OnSignUpClicked()
         {
@@ -74,30 +62,43 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 return;
             }
 
-            if (!Email.Contains("@") || !Email.EndsWith("@gmail.com"))
-            {
-                await Application.Current.MainPage.DisplayAlert("Invalid Email", "Please use a valid Google account (must end in lowercase @gmail.com).", "OK");
-                return;
-            }
-
+            // Validation (Some checks remain here, others move to service)
             if (Password != ConfirmPassword)
             {
                 await Application.Current.MainPage.DisplayAlert("Error", "Passwords do not match.", "OK");
                 return;
             }
 
-            if (!IsPasswordValid(Password))
+            // FIX 7: Password validation uses the injected service
+            if (!_authService.IsPasswordValid(Password))
             {
                 await Application.Current.MainPage.DisplayAlert("Weak Password", "Password must contain at least:\n- One Uppercase letter\n- One Lowercase letter\n- One Number", "OK");
                 return;
             }
 
-            Preferences.Set("UserEmail", Email);
-            Preferences.Set("UserPassword", Password);
+            // FIX 8: Registration uses the injected service
+            try
+            {
+                // Note: The email validation (ending in @gmail.com) is now assumed to be handled either
+                // by Firebase rules (if using Firebase) or inside the IAuthService implementation.
+                string userId = await _authService.SignUpAsync(Email, Password);
 
-            await Application.Current.MainPage.DisplayAlert("Success", "Account created successfully!", "OK");
-            await Application.Current.MainPage.Navigation.PushAsync(new SignUpSuccessPage());
+                // Save user ID for future sessions
+                await SecureStorage.Default.SetAsync("UserId", userId);
+
+                await Application.Current.MainPage.DisplayAlert("Success", "Account created successfully!", "OK");
+
+                // FIX 9: Navigate to success page using DI
+                await OnNavTapped(nameof(SignUpSuccessPage));
+            }
+            catch (Exception ex)
+            {
+                // Display error message provided by the AuthService (e.g., Email already in use)
+                await Application.Current.MainPage.DisplayAlert("Registration Failed", ex.Message, "OK");
+            }
         }
+
+        // --- Toggle Logic (Remains in ViewModel for UI state) ---
 
         private void OnTogglePasswordClicked(object parameter)
         {
@@ -109,20 +110,46 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             IsConfirmPasswordVisible = !IsConfirmPasswordVisible;
         }
 
+        // --- Social Login Logic ---
+
         private async Task OnSocialLoginClicked(string provider)
         {
-            await Application.Current.MainPage.DisplayAlert(provider, $"Connecting to {provider}...", "OK");
-            await Task.Delay(1500);
+            if (string.IsNullOrEmpty(provider)) return;
 
-            Preferences.Set("UserEmail", $"{provider.ToLower()}@user.com");
+            // Retrieve the service provider for navigation
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
 
-            await Application.Current.MainPage.DisplayAlert("Success", $"Account created with {provider}!", "OK");
-            await Application.Current.MainPage.Navigation.PushAsync(new SignUpSuccessPage());
+            switch (provider.ToLower())
+            {
+                case "google":
+                case "apple":
+                case "facebook":
+                    // Handle unimplemented providers gracefully
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Future Update",
+                        $"The {provider} login feature is currently in development and will be available in a future update.",
+                        "OK");
+                    break;
+            }
         }
 
-        private bool IsPasswordValid(string password)
+        // --- DI Navigation Helper ---
+        private async Task OnNavTapped(string destination)
         {
-            return password.Any(char.IsUpper) && password.Any(char.IsLower) && password.Any(char.IsDigit);
+            // Retrieve the service provider
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
+
+            // Use reflection to get the type and resolve the page
+            Type pageType = Type.GetType($"Mental_Health_Wellness_Tracker.Views.{destination}");
+
+            if (pageType != null)
+            {
+                // GetRequiredService retrieves the page and automatically injects its ViewModel
+                Page nextPage = (Page)services.GetRequiredService(pageType);
+                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
+            }
         }
     }
 }

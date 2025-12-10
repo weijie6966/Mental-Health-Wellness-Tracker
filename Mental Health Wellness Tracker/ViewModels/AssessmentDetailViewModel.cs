@@ -8,7 +8,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class AssessmentDetailViewModel : ViewModelBase
     {
-        private AssessmentHistoryItem _item;
+        // FIX: Change the private field type from AssessmentHistoryItem to AssessmentResult
+        private AssessmentResult _item;
 
         // Properties bound to the View
         public string DateDisplay { get; private set; }
@@ -26,20 +27,24 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // Commands
         public ICommand BackCommand { get; }
 
-        public AssessmentDetailViewModel(AssessmentHistoryItem item)
+        public AssessmentDetailViewModel(AssessmentResult item)
         {
-            _item = item;
+            _item = item; // This is now a valid assignment
             LoadData(item);
+
+            // NOTE: Ensure RelayCommand class is accessible (e.g., in a Commands folder or this namespace)
             BackCommand = new RelayCommand(async _ => await Application.Current.MainPage.Navigation.PopAsync());
         }
 
-        private void LoadData(AssessmentHistoryItem item)
+        private void LoadData(AssessmentResult item)
         {
+            // This part is already correct, using item.AnswerData (the computed property)
+            // and the correct consolidated properties (DateTaken, TotalScore, CalculatedResult).
             if (item == null || item.AnswerData == null || item.AnswerData.Count == 0) return;
 
-            DateDisplay = item.Date.ToString("MMMM dd, yyyy - HH:mm");
-            ScoreDisplay = item.Score.ToString();
-            StatusDisplay = item.Status;
+            DateDisplay = item.DateTaken.ToString("MMMM dd, yyyy - HH:mm");
+            ScoreDisplay = item.TotalScore.ToString();
+            StatusDisplay = item.CalculatedResult;
 
             var scores = item.AnswerData;
 

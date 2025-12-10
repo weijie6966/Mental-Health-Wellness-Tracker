@@ -3,34 +3,48 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Mental_Health_Wellness_Tracker.Models;
 using Mental_Health_Wellness_Tracker.ViewModels;
+using Microsoft.Extensions.DependencyInjection; // Essential for DI service locator (fallback)
+using System; // For Application.Current
 
-namespace Mental_Health_Wellness_Tracker
+// NOTE: We assume the XAML file has x:Class="Mental_Health_Wellness_Tracker.Views.CommunityPage"
+namespace Mental_Health_Wellness_Tracker.Views
 {
-    // Note: PostComment and Post definitions are now found in Models/PostModels.cs
-
+    // FIX: Ensure the 'partial' keyword is present here!
     public partial class CommunityPage : ContentPage, INotifyPropertyChanged
     {
-        // The core data logic and properties are now managed by the ViewModel.
-
-        public CommunityPage(Post newEntry = null)
+        // FIX 1: Constructor uses Dependency Injection to get the ViewModel
+        public CommunityPage(CommunityViewModel viewModel)
         {
+            // This call should now link to the auto-generated code.
             InitializeComponent();
 
-            // Instantiate the ViewModel
-            var viewModel = new CommunityViewModel();
+            // Set the BindingContext to the injected ViewModel
             this.BindingContext = viewModel;
 
-            // SPECIAL CASE: Handle new post injection from WriteDiaryPage
-            if (newEntry != null)
-            {
-                // Add the new post directly to the static ViewModel collection
-                CommunityViewModel.SharedPosts.Insert(0, newEntry);
-            }
-
-            // All event handlers removed. Logic is handled by commands in the ViewModel.
+            // ... (rest of the logic for the default constructor)
         }
 
-        // Retain INPC boilerplate if the page itself needs to notify, though less critical now.
+        // Overload constructor to accept a new Post model during navigation
+        public CommunityPage(Post newEntry) : this(GetViewModelFromDI())
+        {
+            // InitializeComponent is implicitly called via the : this(GetViewModelFromDI()) constructor chain
+
+            if (newEntry != null)
+            {
+                (this.BindingContext as CommunityViewModel)?.AddNewPost(newEntry);
+            }
+        }
+
+        // Helper to retrieve ViewModel from DI for constructor overloads
+        private static CommunityViewModel GetViewModelFromDI()
+        {
+            // FIX: Use optional chaining or null checks for robustness
+            return Application.Current?.Handler?.MauiContext?.Services?.GetService<CommunityViewModel>();
+        }
+
+        // --- Clean up INPC boilerplate (Remove if ViewModel handles all binding logic) ---
+        // If your XAML binds only to the ViewModel, you don't need INPC on the page itself.
+        // However, if you are forced to keep it due to structure:
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

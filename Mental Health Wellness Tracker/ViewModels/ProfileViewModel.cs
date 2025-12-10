@@ -4,32 +4,49 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
-using Mental_Health_Wellness_Tracker;
 using Mental_Health_Wellness_Tracker.Views;
+using Mental_Health_Wellness_Tracker.Models;
+using Mental_Health_Wellness_Tracker.Services;
+using Microsoft.Extensions.DependencyInjection; // Essential for GetService<T>()
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
+    // Assuming Fody.PropertyChanged or manual INPC for UI updates
     public class ProfileViewModel : ViewModelBase
     {
-        // Fody automatically handles INPC for these properties
-        public string Username { get; set; }
-        public string Bio { get; set; }
-        public ImageSource ProfileAvatarSource { get; set; }
+        private readonly IAssessmentRepository _repository;
+        private UserProfile _userProfile; // Model to hold profile data
+
+        // FIX: Properties now rely on the _userProfile model
+        public string Username
+        {
+            get => _userProfile.Username;
+            set { _userProfile.Username = value; OnPropertyChanged(); }
+        }
+        public string Bio
+        {
+            get => _userProfile.Bio;
+            set { _userProfile.Bio = value; OnPropertyChanged(); }
+        }
+
+        public ImageSource ProfileAvatarSource { get; set; } = "nav_profile.png"; // Default image
         public bool IsMenuVisible { get; set; } = false;
 
-        // Commands
+        // Commands (initialization remains the same)
         public ICommand SaveProfileCommand { get; }
         public ICommand LogoutCommand { get; }
         public ICommand ChangeProfilePictureCommand { get; }
         public ICommand ViewProfilePictureCommand { get; }
         public ICommand ToggleMenuCommand { get; }
         public ICommand NavigateCommand { get; }
-        public ICommand ContactUsCommand { get; } // <-- NEW COMMAND
+        public ICommand ContactUsCommand { get; }
+        public ICommand AppearingCommand { get; } // For loading data OnAppearing
 
-        // Constructor and Initialization
-        public ProfileViewModel()
+        // FIX 1: Constructor must accept the repository via DI
+        public ProfileViewModel(IAssessmentRepository repository)
         {
-            LoadProfileData();
+            _repository = repository;
+            _userProfile = new UserProfile();
 
             // Initialize Commands
             SaveProfileCommand = new RelayCommand(async _ => await OnSaveProfileClicked());
@@ -38,46 +55,67 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             ViewProfilePictureCommand = new RelayCommand(async _ => await OnViewProfileClicked());
             ToggleMenuCommand = new RelayCommand(OnToggleMenuClicked);
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
-            ContactUsCommand = new RelayCommand(async _ => await OnContactUsClicked()); // <-- INITIALIZE
+            ContactUsCommand = new RelayCommand(async _ => await OnContactUsClicked());
+            AppearingCommand = new RelayCommand(async _ => await LoadProfileData());
+
+            // Run initial load (OnAppearing will trigger the full reload later)
+            Task.Run(LoadProfileData);
         }
 
-        // --- NEW LOGIC ---
+        // --- Data Loading & Saving (Business Logic) ---
 
-        private async Task OnContactUsClicked()
+        public async Task LoadProfileData() // FIX 2: Load from repository
         {
-            // Navigates to the ContactUsPage located in the Views folder
-            await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ContactUsPage());
-        }
+            string userId = await SecureStorage.GetAsync("user_id");
+            if (string.IsNullOrEmpty(userId)) return;
 
-        // --- Existing Logic ---
+            // Fetch data from repository
+            var profile = await _repository.GetUserProfileAsync(userId);
 
-        private void LoadProfileData()
-        {
-            // Load text data
-            Username = Preferences.Get("UsernameKey", "New User");
-            Bio = Preferences.Get("BioKey", "Tell us about yourself.");
-
-            // Load saved image path
-            string savedImagePath = Preferences.Get("ProfileImagePath", string.Empty);
-
-            // Set default or saved image
-            if (!string.IsNullOrEmpty(savedImagePath) && File.Exists(savedImagePath))
+            if (profile != null)
             {
-                ProfileAvatarSource = ImageSource.FromFile(savedImagePath);
+                _userProfile = profile;
+
+                // Update local preference cache (for compatibility with WriteDiaryViewModel)
+                Preferences.Set("UsernameKey", profile.Username);
+
+                // Trigger UI update for bound properties
+                OnPropertyChanged(nameof(Username));
+                OnPropertyChanged(nameof(Bio));
+
+                // Load and set avatar source
+                if (!string.IsNullOrEmpty(_userProfile.ProfileImagePath) && File.Exists(_userProfile.ProfileImagePath))
+                {
+                    ProfileAvatarSource = ImageSource.FromFile(_userProfile.ProfileImagePath);
+                }
+                else
+                {
+                    ProfileAvatarSource = "nav_profile.png";
+                }
+                OnPropertyChanged(nameof(ProfileAvatarSource));
+            }
+        }
+
+        private async Task OnSaveProfileClicked() // FIX 3: Save to repository
+        {
+            // The properties (Username, Bio) are already updated via the setters,
+            // so we just need to update the remaining model fields and persist.
+            _userProfile.LastUpdated = DateTime.Now;
+
+            bool success = await _repository.SaveUserProfileAsync(_userProfile);
+            if (success)
+            {
+                // Update local preference cache (for compatibility with WriteDiaryViewModel)
+                Preferences.Set("UsernameKey", _userProfile.Username);
+                await Application.Current.MainPage.DisplayAlert("Success", "Profile updated successfully!", "OK");
             }
             else
             {
-                ProfileAvatarSource = "nav_profile.png";
+                await Application.Current.MainPage.DisplayAlert("Error", "Failed to update profile.", "OK");
             }
         }
 
-        private async Task OnSaveProfileClicked()
-        {
-            Preferences.Set("UsernameKey", Username);
-            Preferences.Set("BioKey", Bio);
-
-            await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Success", "Profile updated successfully!", "OK");
-        }
+        // --- Image/File Logic ---
 
         private async Task OnChangeProfileClicked()
         {
@@ -85,76 +123,95 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
             try
             {
-                var result = await FilePicker.Default.PickAsync(new PickOptions
-                {
-                    PickerTitle = "Select a profile picture",
-                    FileTypes = FilePickerFileType.Images
-                });
+                var result = await FilePicker.Default.PickAsync(new PickOptions { PickerTitle = "Select a profile picture", FileTypes = FilePickerFileType.Images });
 
                 if (result != null)
                 {
-                    string fileName = "user_profile_pic.png";
-                    string permanentPath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+                    string permanentPath = Path.Combine(FileSystem.AppDataDirectory, "user_profile_pic.png");
 
-                    // 2. Copy the file there
+                    // Copy file to permanent storage location
                     using (var sourceStream = await result.OpenReadAsync())
                     using (var localFileStream = File.Create(permanentPath))
                     {
                         await sourceStream.CopyToAsync(localFileStream);
                     }
 
-                    // 3. Update the UI bound property
+                    // Update model and UI
+                    _userProfile.ProfileImagePath = permanentPath;
                     ProfileAvatarSource = ImageSource.FromFile(permanentPath);
-
-                    // 4. Save this permanent path to Preferences
-                    Preferences.Set("ProfileImagePath", permanentPath);
+                    OnPropertyChanged(nameof(ProfileAvatarSource));
                 }
             }
             catch (Exception ex)
             {
-                await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Error", $"Could not pick image: {ex.Message}", "OK");
+                await Application.Current.MainPage.DisplayAlert("Error", $"Could not pick image: {ex.Message}", "OK");
             }
-        }
-
-        private void OnToggleMenuClicked(object parameter)
-        {
-            IsMenuVisible = !IsMenuVisible;
         }
 
         private async Task OnViewProfileClicked()
         {
             IsMenuVisible = false;
 
-            string currentImagePath = Preferences.Get("ProfileImagePath", "nav_profile.png");
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
 
-            // Navigate to the ProfilePictureViewPage, passing the path.
-            await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ProfilePictureViewPage(currentImagePath));
+            // FIX 4: Use DI for navigation, and pass the required path through the Page's constructor
+            await Application.Current.MainPage.Navigation.PushAsync(new ProfilePictureViewPage(_userProfile.ProfileImagePath));
+        }
+
+        // --- Command Logic ---
+
+        private void OnToggleMenuClicked(object parameter)
+        {
+            IsMenuVisible = !IsMenuVisible;
         }
 
         private async Task OnLogoutClicked()
         {
-            await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Logout", "You have been logged out.", "OK");
-            // Use PopToRootAsync to return to the root (Login) screen
-            await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PopToRootAsync();
+            // Clear session data
+            SecureStorage.Remove("auth_token");
+            SecureStorage.Remove("user_id");
+            Preferences.Clear();
+
+            await Application.Current.MainPage.DisplayAlert("Logout", "You have been logged out.", "OK");
+
+            // Navigate to the root (Login) screen
+            await Application.Current.MainPage.Navigation.PopToRootAsync();
         }
 
+        // FIX 5: Navigation method for Contact Us page (uses DI)
+        private async Task OnContactUsClicked()
+        {
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
+
+            var nextPage = services.GetService<ContactUsPage>();
+            if (nextPage != null)
+            {
+                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
+            }
+        }
+
+        // FIX 6: All bottom navigation uses DI
         private async Task OnNavTapped(string destination)
         {
-            if (destination == null) return;
+            if (destination == null || destination == "Profile") return;
 
-            // Map string command parameter to Page instance (using simple push/pop model)
+            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
+
             Page nextPage = destination switch
             {
-                "Community" => new CommunityPage(),
-                "List" => new AssessmentPage(),
-                "Diary" => new WriteDiaryPage(),
-                "Stats" => new AnalyticPage(),
+                "Community" => services.GetService<CommunityPage>(),
+                "List" => services.GetService<AssessmentPage>(),
+                "Diary" => services.GetService<WriteDiaryPage>(),
+                "Stats" => services.GetService<AnalyticPage>(),
                 _ => null
             };
 
             if (nextPage != null)
             {
-                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(nextPage);
+                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
             }
         }
     }

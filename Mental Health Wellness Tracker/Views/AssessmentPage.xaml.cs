@@ -1,14 +1,16 @@
 using Microsoft.Maui.Controls;
+using Mental_Health_Wellness_Tracker.ViewModels;
 
-namespace Mental_Health_Wellness_Tracker
+namespace Mental_Health_Wellness_Tracker.Views
 {
-    // All original classes and logic have been moved.
     public partial class AssessmentPage : ContentPage
     {
-        public AssessmentPage()
+        // The constructor now injects the ViewModel via Dependency Injection (DI)
+        public AssessmentPage(AssessmentViewModel viewModel)
         {
             InitializeComponent();
-            // All logic is handled by AssessmentViewModel and the Question ItemViewModel
+            // Set the BindingContext to the injected ViewModel
+            BindingContext = viewModel;
         }
     }
 }

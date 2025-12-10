@@ -5,9 +5,6 @@
              x:Class="Mental_Health_Wellness_Tracker.ProfilePage"
              NavigationPage.HasNavigationBar="False">
 
-    <ContentPage.BindingContext>
-        <vm:ProfileViewModel />
-    </ContentPage.BindingContext>
 
     <ContentPage.Resources>
         <ResourceDictionary>

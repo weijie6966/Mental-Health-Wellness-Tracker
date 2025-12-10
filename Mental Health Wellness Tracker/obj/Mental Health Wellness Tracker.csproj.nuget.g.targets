@@ -94,6 +94,7 @@
     <Import Project="$(NuGetPackageRoot)prism.container.dryioc\9.0.106\buildTransitive\Prism.Container.DryIoc.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.dryioc\9.0.106\buildTransitive\Prism.Container.DryIoc.targets')" />
   </ImportGroup>
   <ImportGroup Condition=" '$(TargetFramework)' == 'net8.0-ios' AND '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net8.0\SQLitePCLRaw.lib.e_sqlite3.targets" Condition="Exists('$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net8.0\SQLitePCLRaw.lib.e_sqlite3.targets')" />
     <Import Project="$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets" Condition="Exists('$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets')" />
     <Import Project="$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets" Condition="Exists('$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets')" />
     <Import Project="$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets')" />
@@ -107,6 +108,7 @@
     <Import Project="$(NuGetPackageRoot)prism.container.dryioc\9.0.106\buildTransitive\Prism.Container.DryIoc.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.dryioc\9.0.106\buildTransitive\Prism.Container.DryIoc.targets')" />
   </ImportGroup>
   <ImportGroup Condition=" '$(TargetFramework)' == 'net8.0-maccatalyst' AND '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net8.0\SQLitePCLRaw.lib.e_sqlite3.targets" Condition="Exists('$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net8.0\SQLitePCLRaw.lib.e_sqlite3.targets')" />
     <Import Project="$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets" Condition="Exists('$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets')" />
     <Import Project="$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets" Condition="Exists('$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets')" />
     <Import Project="$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets')" />
@@ -120,6 +122,7 @@
     <Import Project="$(NuGetPackageRoot)prism.container.dryioc\9.0.106\buildTransitive\Prism.Container.DryIoc.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.dryioc\9.0.106\buildTransitive\Prism.Container.DryIoc.targets')" />
   </ImportGroup>
   <ImportGroup Condition=" '$(TargetFramework)' == 'net8.0-windows10.0.19041.0' AND '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net8.0\SQLitePCLRaw.lib.e_sqlite3.targets" Condition="Exists('$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net8.0\SQLitePCLRaw.lib.e_sqlite3.targets')" />
     <Import Project="$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets" Condition="Exists('$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets')" />
     <Import Project="$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets" Condition="Exists('$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets')" />
     <Import Project="$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets')" />

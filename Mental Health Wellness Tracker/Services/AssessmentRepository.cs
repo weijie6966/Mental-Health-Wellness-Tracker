@@ -26,7 +26,7 @@ namespace Mental_Health_Wellness_Tracker.Services
         private const string ProjectId = "mental-health-wellness-tracker";
 
         // Your Firebase Web API Key
-        private const string WebApiKey = "AIzaSyARXVMSRY2JvzMJue2jWUoCd44bv1TYBaE";
+        private const string WebApiKey = "API-KEY";
 
         public AssessmentRepository()
         {

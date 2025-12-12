@@ -30,29 +30,10 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
         }
 
-        private Post _activePostForComment;
-        private string _commentText;
-
-        // Properties for the comment input field
-        public string CommentText
-        {
-            get => _commentText;
-            set { _commentText = value; OnPropertyChanged(); ((RelayCommand)CommentSendCommand).RaiseCanExecuteChanged(); }
-        }
-
-        private bool _isInputVisible;
-        public bool IsInputVisible
-        {
-            get => _isInputVisible;
-            set { _isInputVisible = value; OnPropertyChanged(); }
-        }
-
         // Commands
         public ICommand DeleteCommand { get; }
         public ICommand EditCommand { get; }
-        public ICommand CommentViewToggleCommand { get; }
-        public ICommand CommentSendCommand { get; }
-        public ICommand LikeCommand { get; }
+        public ICommand HugCommand { get; }
         public ICommand NavigateCommand { get; }
         public ICommand AppearingCommand { get; } // Command to run LoadPosts on page appearing
 
@@ -88,9 +69,9 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             _currentUserId = await SecureStorage.GetAsync("user_id");
         }
 
-        private bool CanSendComment(object parameter)
+        private async Task LoadUserIdAsync()
         {
-            return _activePostForComment != null && !string.IsNullOrWhiteSpace(CommentText);
+            _currentUserId = await SecureStorage.GetAsync("user_id");
         }
 
         // FIX: LoadPosts now handles mapping from CloudDiaryEntry to Post
@@ -191,13 +172,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
             else
             {
-                _activePostForComment = null;
-                IsInputVisible = false;
-                CommentText = string.Empty;
+                _ = UpdateHugsAsync(p);
             }
         }
 
-        private void OnCommentSendClicked(object parameter)
+        private async Task UpdateHugsAsync(Post post)
         {
             _ = SendCommentAsync();
         }

@@ -17,6 +17,7 @@ namespace Mental_Health_Wellness_Tracker.Services
 
         // Retrieve assessment history for a specific user
         Task<List<AssessmentResult>> GetAssessmentHistoryAsync(string userId);
+        Task<List<string>> GetAvailableTestTypesAsync();
 
         // Sync pending assessments that have not yet been uploaded to the server
         Task SyncPendingAssessmentsAsync();

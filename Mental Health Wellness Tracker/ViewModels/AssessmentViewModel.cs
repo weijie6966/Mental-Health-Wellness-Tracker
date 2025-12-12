@@ -38,7 +38,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             NextCommand = new RelayCommand(_ => MoveNext(), _ => CanMoveNext());
             PreviousCommand = new RelayCommand(_ => MovePrevious(), _ => CanMovePrevious());
-            SelectOptionCommand = new RelayCommand<int>(score => SelectOption(score));
+            SelectOptionCommand = new RelayCommand<object>(score => SelectOption(score));
             SubmitCommand = new RelayCommand(async _ => await SubmitAssessment(), _ => CanSubmit());
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
 
@@ -79,8 +79,13 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             CurrentQuestionIndex = 0;
         }
 
-        private void SelectOption(int score)
+        private void SelectOption(object parameter)
         {
+            if (parameter == null) return;
+            if (!int.TryParse(parameter.ToString(), out int score))
+            {
+                return;
+            }
             if (CurrentQuestion != null)
             {
                 // FIX: Uses the SelectedScore property directly from the model (now available)
@@ -136,7 +141,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (!CanSubmit()) return;
 
-            int totalScore = Questions.Sum(q => q.SelectedScore.GetValueOrDefault());
+            int totalScore = Questions.Sum(CalculateScore);
 
             try
             {
@@ -185,7 +190,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             return "Severe Depression";
         }
 
-        private async Task OnNavTapped(string destination)
+        private int CalculateScore(AssessmentQuestion question)
         {
             if (destination == null) return;
             Page nextPage = destination switch

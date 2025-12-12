@@ -91,12 +91,24 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 }
                 OnPropertyChanged(nameof(ProfileAvatarSource));
             }
+            else
+            {
+                _userProfile = new UserProfile { UserId = userId };
+            }
         }
 
         private async Task OnSaveProfileClicked() // FIX 3: Save to repository
         {
             // The properties (Username, Bio) are already updated via the setters,
             // so we just need to update the remaining model fields and persist.
+            var userId = await SecureStorage.GetAsync("user_id");
+            if (string.IsNullOrEmpty(userId))
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "You need to sign in before saving a profile.", "OK");
+                return;
+            }
+
+            _userProfile.UserId = userId;
             _userProfile.LastUpdated = DateTime.Now;
 
             bool success = await _repository.SaveUserProfileAsync(_userProfile);

@@ -214,6 +214,16 @@ namespace Mental_Health_Wellness_Tracker.Services
                 .ToListAsync();
         }
 
+        public async Task<List<string>> GetAvailableTestTypesAsync()
+        {
+            await InitAsync();
+            var records = await _database.Table<AssessmentQuestion>()
+                                         .Select(q => q.TestType)
+                                         .Distinct()
+                                         .ToListAsync();
+            return records;
+        }
+
         // Save the assessment result
         public async Task<bool> SaveAssessmentResultAsync(AssessmentResult result)
         {

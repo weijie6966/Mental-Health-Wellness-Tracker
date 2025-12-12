@@ -143,6 +143,9 @@ namespace Mental_Health_Wellness_Tracker.Services
                         // 注意：整数在 Firestore REST API 中必须转为字符串传给 integerValue
                         moodScore = new { integerValue = localEntry.MoodScore.ToString() },
 
+                        // Social counters start at zero
+                        comments = new { integerValue = "0" },
+
                         // This will now send the actual cloud link (if the upload was successful)
                         imgUrl = new { stringValue = localEntry.ImgUrl ?? "" },
 

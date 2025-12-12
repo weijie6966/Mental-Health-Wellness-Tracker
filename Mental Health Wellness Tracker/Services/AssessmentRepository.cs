@@ -217,11 +217,14 @@ namespace Mental_Health_Wellness_Tracker.Services
         public async Task<List<string>> GetAvailableTestTypesAsync()
         {
             await InitAsync();
-            var records = await _database.Table<AssessmentQuestion>()
-                                         .Select(q => q.TestType)
-                                         .Distinct()
-                                         .ToListAsync();
-            return records;
+            var records = await _database.QueryAsync<AssessmentQuestion>(
+                "SELECT DISTINCT TestType FROM AssessmentQuestion WHERE TestType IS NOT NULL AND TRIM(TestType) <> ''");
+
+            return records
+                .Select(r => r.TestType)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct()
+                .ToList();
         }
 
         public async Task<string> ChooseRandomTestTypeAsync()

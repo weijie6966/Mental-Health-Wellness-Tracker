@@ -770,12 +770,6 @@ namespace Mental_Health_Wellness_Tracker.Services
             return newLikeCount;
         }
 
-        public Task<int?> UpdateDiaryHugsAsync(string diaryId, int newHugCount)
-        {
-            // Backend currently stores the counter as "likes"; reuse that field for hugs.
-            return UpdateDiaryLikesAsync(diaryId, newHugCount);
-        }
-
         public async Task<bool> SaveUserProfileAsync(UserProfile profile)
         {
             await InitAsync();

@@ -42,7 +42,9 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             // Initialize Commands
             DeleteCommand = new RelayCommand(async param => await OnDeleteClicked(param as Post), p => IsPostMine(p as Post));
             EditCommand = new RelayCommand(async param => await OnEditClicked(param as Post), p => IsPostMine(p as Post));
-            HugCommand = new RelayCommand(OnHugClicked);
+            CommentViewToggleCommand = new RelayCommand(async param => await OnCommentViewToggleClicked(param));
+            CommentSendCommand = new RelayCommand(OnCommentSendClicked, CanSendComment);
+            LikeCommand = new RelayCommand(OnLikeClicked);
 
             // FIX: Implement DI-based navigation
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
@@ -67,6 +69,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             _currentUserId = await SecureStorage.GetAsync("user_id");
         }
 
+        private async Task LoadUserIdAsync()
+        {
+            _currentUserId = await SecureStorage.GetAsync("user_id");
+        }
+
         // FIX: LoadPosts now handles mapping from CloudDiaryEntry to Post
         public async Task LoadPosts()
         {
@@ -81,22 +88,17 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 foreach (var diary in fetchedDiaries)
                 {
-                    var post = new Post
+                    Posts.Add(new Post
                     {
                         FirestoreId = diary.Id,
                         UserId = diary.UserId,
                         Username = string.IsNullOrEmpty(diary.Username) ? "Unknown" : diary.Username,
                         Content = diary.Content,
                         MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji,
-                        Hugs = diary.Likes
-                    };
-
-                    if (!string.IsNullOrWhiteSpace(diary.ImgUrl))
-                    {
-                        post.PostImages.Add(diary.ImgUrl);
-                    }
-
-                    Posts.Add(post);
+                        Likes = diary.Likes,
+                        Comments = diary.CommentsCount,
+                        CommentsList = new ObservableCollection<PostComment>()
+                    });
                 }
             }
             catch (Exception ex)
@@ -146,9 +148,29 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
         }
 
-        private void OnHugClicked(object parameter)
+        private async Task OnCommentViewToggleClicked(object parameter)
         {
-            if (parameter is Post p)
+            var selectedPost = parameter as Post;
+            if (selectedPost == null) return;
+
+            selectedPost.IsCommentsVisible = !selectedPost.IsCommentsVisible;
+
+            if (selectedPost.IsCommentsVisible)
+            {
+                _activePostForComment = selectedPost;
+                IsInputVisible = true;
+                if (selectedPost.CommentsList.Count == 0)
+                {
+                    var comments = await _repository.GetDiaryCommentsAsync(selectedPost.FirestoreId);
+                    selectedPost.CommentsList.Clear();
+                    foreach (var comment in comments)
+                    {
+                        selectedPost.CommentsList.Add(comment);
+                    }
+                    selectedPost.Comments = comments.Count;
+                }
+            }
+            else
             {
                 _ = UpdateHugsAsync(p);
             }
@@ -156,16 +178,56 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private async Task UpdateHugsAsync(Post post)
         {
-            var newCount = post.Hugs + 1;
-            var updated = await _repository.UpdateDiaryHugsAsync(post.FirestoreId, newCount);
+            _ = SendCommentAsync();
+        }
 
-            if (updated.HasValue)
+        private async Task SendCommentAsync()
+        {
+            if (_activePostForComment == null || string.IsNullOrWhiteSpace(CommentText)) return;
+
+            string username = Preferences.Get("UsernameKey", "Me");
+
+            var comment = new PostComment
             {
-                post.Hugs = updated.Value;
+                Username = username,
+                Text = CommentText,
+                CommentTime = DateTime.UtcNow
+            };
+
+            var saved = await _repository.AddDiaryCommentAsync(_activePostForComment.FirestoreId, comment);
+            if (saved != null)
+            {
+                _activePostForComment.CommentsList.Add(saved);
+                _activePostForComment.Comments++;
+                CommentText = string.Empty;
+                ((RelayCommand)CommentSendCommand).RaiseCanExecuteChanged();
             }
             else
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Could not send a hug right now.", "OK");
+                await Application.Current.MainPage.DisplayAlert("Error", "Could not post comment right now.", "OK");
+            }
+        }
+
+        private void OnLikeClicked(object parameter)
+        {
+            if (parameter is Post p)
+            {
+                _ = UpdateLikesAsync(p);
+            }
+        }
+
+        private async Task UpdateLikesAsync(Post post)
+        {
+            var newCount = post.Likes + 1;
+            var updated = await _repository.UpdateDiaryLikesAsync(post.FirestoreId, newCount);
+
+            if (updated.HasValue)
+            {
+                post.Likes = updated.Value;
+            }
+            else
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Could not like this post right now.", "OK");
             }
         }
 

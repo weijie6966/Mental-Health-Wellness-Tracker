@@ -10,15 +10,13 @@ using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker.Models;
 using Mental_Health_Wellness_Tracker.Views;
 using Mental_Health_Wellness_Tracker.Services;
-using Microsoft.Extensions.DependencyInjection; // Essential for DI navigation
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     // Assuming Fody.PropertyChanged is used or you implement INPC manually
     public class WriteDiaryViewModel : ViewModelBase
     {
-        // FIX 1: Inject IAssessmentRepository directly
-        private readonly IAssessmentRepository _repository;
+        private readonly IAssessmentRepository _repository = new AssessmentRepository();
 
         // Data fields for the UI (using the MVVM pattern)
         public string DiaryEntryText { get; set; } // Binds to Text in XAML
@@ -35,11 +33,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand PostCommand { get; }
         public ICommand NavigateCommand { get; }
 
-        // FIX 3: Constructor accepts IAssessmentRepository via DI
-        public WriteDiaryViewModel(IAssessmentRepository repository)
+        public WriteDiaryViewModel()
         {
-            _repository = repository;
-
             MoodEmojiClickedCommand = new RelayCommand(OnMoodEmojiClicked);
             UploadImagesCommand = new RelayCommand(async _ => await OnUploadClicked()); // Renamed
             PostCommand = new RelayCommand(async _ => await OnPostClicked());
@@ -93,7 +88,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (string.IsNullOrWhiteSpace(DiaryEntryText) && string.IsNullOrEmpty(_selectedImagePath))
             {
-                await Application.Current.MainPage.DisplayAlert("Hold On", "Please write your diary entry before posting.", "OK");
+                await Application.Current.MainPage.DisplayAlert(
+                    "Hold On",
+                    "Please write your diary entry before posting.",
+                    "OK"
+                );
                 return;
             }
 
@@ -139,15 +138,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             _selectedImagePath = string.Empty;
             SelectedImages.Clear();
 
-            // 导航 to CommunityPage (using DI)
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
-            var nextPage = services.GetService<CommunityPage>();
-            if (nextPage != null)
-            {
-                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
-            }
+            await Application.Current.MainPage.Navigation.PushAsync(new CommunityPage());
         }
 
         private (string name, int score) GetMoodDetails(string emojiFile)
@@ -163,20 +154,16 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
         }
 
-        // FIX 4: Navigation now uses the DI service provider
         private async Task OnNavTapped(string destination)
         {
             if (destination == null) return;
 
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
             Page nextPage = destination switch
             {
-                "Community" => services.GetService<CommunityPage>(),
-                "List" => services.GetService<AssessmentPage>(),
-                "Stats" => services.GetService<AnalyticPage>(),
-                "Profile" => services.GetService<ProfilePage>(),
+                "Community" => new CommunityPage(),
+                "List" => new AssessmentPage(),
+                "Stats" => new AnalyticPage(),
+                "Profile" => new ProfilePage(),
                 "Diary" => null, // Current page
                 _ => null
             };

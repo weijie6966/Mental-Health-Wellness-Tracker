@@ -42,5 +42,11 @@ namespace Mental_Health_Wellness_Tracker.Models
 
         [FirestoreProperty]
         public string ImgUrl { get; set; }
+
+        [FirestoreProperty]
+        public int Likes { get; set; }
+
+        [FirestoreProperty]
+        public int CommentsCount { get; set; }
     }
 }

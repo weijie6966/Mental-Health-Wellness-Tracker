@@ -6,13 +6,12 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker.Services; // FIX 1: Add Services for IAuthService
 using Mental_Health_Wellness_Tracker.Views;       // FIX 2: Add Views for DI Navigation
-using Microsoft.Extensions.DependencyInjection; // FIX 3: Add for GetService<T>()
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class SignUpViewModel : ViewModelBase
     {
-        private readonly IAuthService _authService; // FIX 4: Inject the authentication service
+        private readonly IAuthService _authService = new AuthService();
 
         public string Email { get; set; }
         public string Password { get; set; }
@@ -37,11 +36,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand SocialLoginCommand { get; }
 
 
-        // FIX 5: Constructor must accept IAuthService via DI
-        public SignUpViewModel(IAuthService authService)
+        public SignUpViewModel()
         {
-            _authService = authService;
-
             SignUpCommand = new RelayCommand(async _ => await OnSignUpClicked());
             TogglePasswordCommand = new RelayCommand(OnTogglePasswordClicked);
             ToggleConfirmPasswordCommand = new RelayCommand(OnToggleConfirmPasswordClicked);
@@ -83,9 +79,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 // by Firebase rules (if using Firebase) or inside the IAuthService implementation.
                 string userId = await _authService.SignUpAsync(Email, Password);
 
-                // Save user ID for future sessions
-                await SecureStorage.Default.SetAsync("UserId", userId);
-
                 await Application.Current.MainPage.DisplayAlert("Success", "Account created successfully!", "OK");
 
                 // FIX 9: Navigate to success page using DI
@@ -116,38 +109,24 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (string.IsNullOrEmpty(provider)) return;
 
-            // Retrieve the service provider for navigation
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
-            switch (provider.ToLower())
-            {
-                case "google":
-                case "apple":
-                case "facebook":
-                    // Handle unimplemented providers gracefully
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Future Update",
-                        $"The {provider} login feature is currently in development and will be available in a future update.",
-                        "OK");
-                    break;
-            }
+            await Application.Current.MainPage.DisplayAlert(
+                "Future Update",
+                $"The {provider} login feature is currently in development and will be available in a future update.",
+                "OK");
         }
 
-        // --- DI Navigation Helper ---
         private async Task OnNavTapped(string destination)
         {
-            // Retrieve the service provider
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
-            // Use reflection to get the type and resolve the page
-            Type pageType = Type.GetType($"Mental_Health_Wellness_Tracker.Views.{destination}");
-
-            if (pageType != null)
+            Page nextPage = destination switch
             {
-                // GetRequiredService retrieves the page and automatically injects its ViewModel
-                Page nextPage = (Page)services.GetRequiredService(pageType);
+                nameof(SignUpSuccessPage) => new SignUpSuccessPage(),
+                nameof(SignUpPage) => new SignUpPage(),
+                nameof(ForgotPasswordPage) => new ForgotPasswordPage(),
+                _ => null
+            };
+
+            if (nextPage != null)
+            {
                 await Application.Current.MainPage.Navigation.PushAsync(nextPage);
             }
         }

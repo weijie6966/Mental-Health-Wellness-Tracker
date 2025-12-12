@@ -144,7 +144,6 @@ namespace Mental_Health_Wellness_Tracker.Services
                         moodScore = new { integerValue = localEntry.MoodScore.ToString() },
 
                         // Social counters start at zero
-                        likes = new { integerValue = "0" },
                         comments = new { integerValue = "0" },
 
                         // This will now send the actual cloud link (if the upload was successful)
@@ -614,7 +613,6 @@ namespace Mental_Health_Wellness_Tracker.Services
                                     MoodName = GetString("moodName"),
                                     MoodScore = GetInt("moodScore"),
                                     ImgUrl = GetString("imgUrl"),
-                                    Likes = GetInt("likes"),
                                     CommentsCount = GetInt("comments"),
                                     DateCreated = DateTime.TryParse(dateStr, out var dt) ? dt : DateTime.Now
                                 });
@@ -756,36 +754,6 @@ namespace Mental_Health_Wellness_Tracker.Services
             }
 
             return comments.OrderByDescending(c => c.CommentTime).ToList();
-        }
-
-        public async Task<int?> UpdateDiaryLikesAsync(string diaryId, int newLikeCount)
-        {
-            if (string.IsNullOrEmpty(diaryId)) return null;
-
-            var token = await SecureStorage.GetAsync("auth_token");
-            if (string.IsNullOrEmpty(token)) return null;
-
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var payload = new
-            {
-                fields = new
-                {
-                    likes = new { integerValue = newLikeCount.ToString() }
-                }
-            };
-
-            var request = new HttpRequestMessage(new HttpMethod("PATCH"),
-                $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries/{diaryId}?key={WebApiKey}&updateMask.fieldPaths=likes")
-            {
-                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
-            };
-
-            var response = await client.SendAsync(request);
-            if (!response.IsSuccessStatusCode) return null;
-
-            return newLikeCount;
         }
 
         public async Task<bool> SaveUserProfileAsync(UserProfile profile)

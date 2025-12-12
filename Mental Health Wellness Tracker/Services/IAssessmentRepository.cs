@@ -35,7 +35,6 @@ namespace Mental_Health_Wellness_Tracker.Services
         Task<bool> DeleteDiaryEntryAsync(string firestoreId);
         Task<PostComment> AddDiaryCommentAsync(string diaryId, PostComment comment);
         Task<List<PostComment>> GetDiaryCommentsAsync(string diaryId);
-        Task<int?> UpdateDiaryLikesAsync(string diaryId, int newLikeCount);
         // User profile methods
         Task<bool> SaveUserProfileAsync(UserProfile profile);
         // Retrieve user profile by user ID

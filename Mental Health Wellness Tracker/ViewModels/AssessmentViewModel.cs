@@ -172,9 +172,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 await _assessmentRepository.SaveAssessmentResultAsync(result);
 
-                // Navigates to AssessmentDetailPage, passing the result object
-                // Inside SubmitAssessment() method:
-                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new AssessmentDetailPage(result));
+                // Navigate back to the Profile page after completing the assessment
+                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ProfilePage());
             }
             catch (Exception ex)
             {

@@ -33,7 +33,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // Commands
         public ICommand DeleteCommand { get; }
         public ICommand EditCommand { get; }
-        public ICommand HugCommand { get; }
         public ICommand NavigateCommand { get; }
         public ICommand AppearingCommand { get; } // Command to run LoadPosts on page appearing
 
@@ -42,7 +41,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             // Initialize Commands
             DeleteCommand = new RelayCommand(async param => await OnDeleteClicked(param as Post), p => IsPostMine(p as Post));
             EditCommand = new RelayCommand(async param => await OnEditClicked(param as Post), p => IsPostMine(p as Post));
-            HugCommand = new RelayCommand(OnHugClicked);
 
             // FIX: Implement DI-based navigation
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
@@ -92,8 +90,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                         UserId = diary.UserId,
                         Username = string.IsNullOrEmpty(diary.Username) ? "Unknown" : diary.Username,
                         Content = diary.Content,
-                        MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji,
-                        Hugs = diary.Likes
+                        MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji
                     };
 
                     if (!string.IsNullOrWhiteSpace(diary.ImgUrl))
@@ -155,29 +152,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 {
                     await Application.Current.MainPage.DisplayAlert("Error", "Could not update the post.", "OK");
                 }
-            }
-        }
-
-        private void OnHugClicked(object parameter)
-        {
-            if (parameter is Post p)
-            {
-                _ = UpdateHugsAsync(p);
-            }
-        }
-
-        private async Task UpdateHugsAsync(Post post)
-        {
-            var newCount = post.Hugs + 1;
-            var updated = await _repository.UpdateDiaryHugsAsync(post.FirestoreId, newCount);
-
-            if (updated.HasValue)
-            {
-                post.Hugs = updated.Value;
-            }
-            else
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "Could not send a hug right now.", "OK");
             }
         }
 

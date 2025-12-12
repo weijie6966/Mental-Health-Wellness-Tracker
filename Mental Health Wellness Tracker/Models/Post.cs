@@ -23,23 +23,6 @@ namespace Mental_Health_Wellness_Tracker.Models
         public string Content { get; set; } = string.Empty;
         public string MoodEmoji { get; set; } = "emoji_neutral.png";
 
-        private int _hugs;
-        public int Hugs
-        {
-            get => _hugs;
-            set
-            {
-                if (_hugs != value)
-                {
-                    _hugs = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(HugsText));
-                }
-            }
-        }
-
-        public string HugsText => $"{Hugs} Hug{(Hugs == 1 ? "" : "s")}";
-
         public ObservableCollection<string> PostImages { get; set; } = new ObservableCollection<string>();
 
         public bool HasImages => PostImages?.Count > 0;

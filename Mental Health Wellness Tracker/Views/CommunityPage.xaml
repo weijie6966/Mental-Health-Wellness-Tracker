@@ -105,9 +105,6 @@
        
                                                    Margin="0,0,0,10"/>
 
-                                    <Grid ColumnDefinitions="Auto" ColumnSpacing="10" VerticalOptions="End" HorizontalOptions="Start">
-                                        <Button Grid.Column="0" Text="{Binding HugsText}" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=HugCommand}" CommandParameter="{Binding .}" TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
-                                    </Grid>
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>

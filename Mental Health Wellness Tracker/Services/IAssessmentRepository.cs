@@ -36,7 +36,6 @@ namespace Mental_Health_Wellness_Tracker.Services
         Task<PostComment> AddDiaryCommentAsync(string diaryId, PostComment comment);
         Task<List<PostComment>> GetDiaryCommentsAsync(string diaryId);
         Task<int?> UpdateDiaryLikesAsync(string diaryId, int newLikeCount);
-        Task<int?> UpdateDiaryHugsAsync(string diaryId, int newHugCount);
         // User profile methods
         Task<bool> SaveUserProfileAsync(UserProfile profile);
         // Retrieve user profile by user ID

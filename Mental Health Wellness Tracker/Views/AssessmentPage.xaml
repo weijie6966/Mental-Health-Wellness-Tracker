@@ -49,27 +49,27 @@
                                VerticalOptions="CenterAndExpand"/>
 
                         <StackLayout Spacing="10">
-                            <Button Text="Not at all (0)" 
-                                    Command="{Binding SelectOptionCommand}" 
-                                    CommandParameter="0"
+                            <Button Text="Not at all (0)"
+                                    Command="{Binding SelectOptionCommand}"
+                                    CommandParameter="{x:Int32 0}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=0}"
                                     TextColor="White" 
                                     CornerRadius="8"/>
-                            <Button Text="Several days (1)" 
-                                    Command="{Binding SelectOptionCommand}" 
-                                    CommandParameter="1"
+                            <Button Text="Several days (1)"
+                                    Command="{Binding SelectOptionCommand}"
+                                    CommandParameter="{x:Int32 1}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=1}"
                                     TextColor="White" 
                                     CornerRadius="8"/>
-                            <Button Text="More than half the days (2)" 
-                                    Command="{Binding SelectOptionCommand}" 
-                                    CommandParameter="2"
+                            <Button Text="More than half the days (2)"
+                                    Command="{Binding SelectOptionCommand}"
+                                    CommandParameter="{x:Int32 2}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=2}"
                                     TextColor="White" 
                                     CornerRadius="8"/>
-                            <Button Text="Nearly every day (3)" 
-                                    Command="{Binding SelectOptionCommand}" 
-                                    CommandParameter="3"
+                            <Button Text="Nearly every day (3)"
+                                    Command="{Binding SelectOptionCommand}"
+                                    CommandParameter="{x:Int32 3}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=3}"
                                     TextColor="White" 
                                     CornerRadius="8"/>
@@ -110,8 +110,13 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Border Grid.Row="1" BackgroundColor="#15FFFFFF" Padding="20, 10" StrokeThickness="0">
-            <Grid ColumnDefinitions="*,*,*,*">
+        <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+            <Grid ColumnDefinitions="*,*,*,*,*">
+                <Button Grid.Column="0" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="#689FBD" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="1" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="2" ImageSource="nav_diary.png" Command="{Binding NavigateCommand}" CommandParameter="Diary" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="3" ImageSource="nav_graph.png" Command="{Binding NavigateCommand}" CommandParameter="Stats" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="4" ImageSource="nav_profile.png" Command="{Binding NavigateCommand}" CommandParameter="Profile" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
             </Grid>
         </Border>
 

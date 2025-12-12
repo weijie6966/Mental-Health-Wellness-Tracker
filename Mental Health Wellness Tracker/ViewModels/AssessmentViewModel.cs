@@ -17,7 +17,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
     {
         private readonly IAssessmentRepository _assessmentRepository = new AssessmentRepository();
 
-        private const string DefaultTestType = "PSS";
+        private string _activeTestType = "PSS";
 
         // FIX: ObservableCollection now holds the base AssessmentQuestion model
         public ObservableCollection<AssessmentQuestion> Questions { get; set; } = new ObservableCollection<AssessmentQuestion>();
@@ -56,7 +56,9 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             Questions.Clear();
 
-            var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(DefaultTestType);
+            _activeTestType = await _assessmentRepository.ChooseRandomTestTypeAsync();
+
+            var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(_activeTestType);
 
             if (fetched != null && fetched.Count > 0)
             {
@@ -161,7 +163,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                     UserId = userId,
                     UserEmail = userEmail,
                     Username = username,
-                    TestType = DefaultTestType,
+                    TestType = _activeTestType,
                     TotalScore = totalScore, // Correct property
                     DateTaken = DateTime.UtcNow, // Correct property
                     CalculatedResult = GetCalculatedResult(totalScore), // Correct property
@@ -191,6 +193,22 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         }
 
         private int CalculateScore(AssessmentQuestion question)
+        {
+            if (question == null || !question.SelectedScore.HasValue) return 0;
+
+            var chosen = question.SelectedScore.Value;
+            var max = question.MaxScore <= 0 ? 3 : question.MaxScore;
+            chosen = Math.Clamp(chosen, 0, max);
+
+            if (question.IsReversed)
+            {
+                return Math.Max(0, max - chosen);
+            }
+
+            return chosen;
+        }
+
+        private async Task OnNavTapped(string destination)
         {
             if (destination == null) return;
             Page nextPage = destination switch

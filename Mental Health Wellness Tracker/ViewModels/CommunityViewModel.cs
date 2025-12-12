@@ -33,7 +33,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // Commands
         public ICommand DeleteCommand { get; }
         public ICommand EditCommand { get; }
-        public ICommand HugCommand { get; }
         public ICommand NavigateCommand { get; }
         public ICommand AppearingCommand { get; } // Command to run LoadPosts on page appearing
 
@@ -42,19 +41,20 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             // Initialize Commands
             DeleteCommand = new RelayCommand(async param => await OnDeleteClicked(param as Post), p => IsPostMine(p as Post));
             EditCommand = new RelayCommand(async param => await OnEditClicked(param as Post), p => IsPostMine(p as Post));
-            CommentViewToggleCommand = new RelayCommand(async param => await OnCommentViewToggleClicked(param));
-            CommentSendCommand = new RelayCommand(OnCommentSendClicked, CanSendComment);
-            LikeCommand = new RelayCommand(OnLikeClicked);
 
             // FIX: Implement DI-based navigation
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
 
             AppearingCommand = new RelayCommand(async _ => await LoadPosts());
 
-            _ = LoadUserIdAsync();
+            _ = InitializeAsync();
+        }
 
-            // Load initial posts (Optional: You might want to remove this and rely only on OnAppearing)
-            Task.Run(LoadPosts);
+        private async Task InitializeAsync()
+        {
+            await LoadUserIdAsync();
+            await LoadPosts();
+            RefreshCommandStates();
         }
 
         // Helper to check ownership (for Delete/Edit commands)
@@ -67,11 +67,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         private async Task LoadUserIdAsync()
         {
             _currentUserId = await SecureStorage.GetAsync("user_id");
-        }
-
-        private async Task LoadUserIdAsync()
-        {
-            _currentUserId = await SecureStorage.GetAsync("user_id");
+            RefreshCommandStates();
         }
 
         // FIX: LoadPosts now handles mapping from CloudDiaryEntry to Post
@@ -88,17 +84,21 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 foreach (var diary in fetchedDiaries)
                 {
-                    Posts.Add(new Post
+                    var post = new Post
                     {
                         FirestoreId = diary.Id,
                         UserId = diary.UserId,
                         Username = string.IsNullOrEmpty(diary.Username) ? "Unknown" : diary.Username,
                         Content = diary.Content,
-                        MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji,
-                        Likes = diary.Likes,
-                        Comments = diary.CommentsCount,
-                        CommentsList = new ObservableCollection<PostComment>()
-                    });
+                        MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(diary.ImgUrl))
+                    {
+                        post.PostImages.Add(diary.ImgUrl);
+                    }
+
+                    Posts.Add(post);
                 }
             }
             catch (Exception ex)
@@ -111,6 +111,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
 
             OnPropertyChanged(nameof(Posts));
+            RefreshCommandStates();
         }
 
         // --- Core Logic Commands ---
@@ -133,6 +134,12 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
         }
 
+        private void RefreshCommandStates()
+        {
+            (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
         private async Task OnEditClicked(Post postToEdit)
         {
             if (postToEdit == null) return;
@@ -145,89 +152,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 {
                     await Application.Current.MainPage.DisplayAlert("Error", "Could not update the post.", "OK");
                 }
-            }
-        }
-
-        private async Task OnCommentViewToggleClicked(object parameter)
-        {
-            var selectedPost = parameter as Post;
-            if (selectedPost == null) return;
-
-            selectedPost.IsCommentsVisible = !selectedPost.IsCommentsVisible;
-
-            if (selectedPost.IsCommentsVisible)
-            {
-                _activePostForComment = selectedPost;
-                IsInputVisible = true;
-                if (selectedPost.CommentsList.Count == 0)
-                {
-                    var comments = await _repository.GetDiaryCommentsAsync(selectedPost.FirestoreId);
-                    selectedPost.CommentsList.Clear();
-                    foreach (var comment in comments)
-                    {
-                        selectedPost.CommentsList.Add(comment);
-                    }
-                    selectedPost.Comments = comments.Count;
-                }
-            }
-            else
-            {
-                _ = UpdateHugsAsync(p);
-            }
-        }
-
-        private async Task UpdateHugsAsync(Post post)
-        {
-            _ = SendCommentAsync();
-        }
-
-        private async Task SendCommentAsync()
-        {
-            if (_activePostForComment == null || string.IsNullOrWhiteSpace(CommentText)) return;
-
-            string username = Preferences.Get("UsernameKey", "Me");
-
-            var comment = new PostComment
-            {
-                Username = username,
-                Text = CommentText,
-                CommentTime = DateTime.UtcNow
-            };
-
-            var saved = await _repository.AddDiaryCommentAsync(_activePostForComment.FirestoreId, comment);
-            if (saved != null)
-            {
-                _activePostForComment.CommentsList.Add(saved);
-                _activePostForComment.Comments++;
-                CommentText = string.Empty;
-                ((RelayCommand)CommentSendCommand).RaiseCanExecuteChanged();
-            }
-            else
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "Could not post comment right now.", "OK");
-            }
-        }
-
-        private void OnLikeClicked(object parameter)
-        {
-            if (parameter is Post p)
-            {
-                _ = UpdateLikesAsync(p);
-            }
-        }
-
-        private async Task UpdateLikesAsync(Post post)
-        {
-            var newCount = post.Likes + 1;
-            var updated = await _repository.UpdateDiaryLikesAsync(post.FirestoreId, newCount);
-
-            if (updated.HasValue)
-            {
-                post.Likes = updated.Value;
-            }
-            else
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "Could not like this post right now.", "OK");
             }
         }
 

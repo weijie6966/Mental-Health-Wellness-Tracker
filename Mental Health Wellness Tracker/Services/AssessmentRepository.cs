@@ -224,6 +224,21 @@ namespace Mental_Health_Wellness_Tracker.Services
             return records;
         }
 
+        public async Task<string> ChooseRandomTestTypeAsync()
+        {
+            var available = await GetAvailableTestTypesAsync();
+            var pool = available?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList() ?? new List<string>();
+
+            if (pool.Count == 0)
+            {
+                return "PSS";
+            }
+
+            var random = new Random();
+            var index = random.Next(pool.Count);
+            return pool[index];
+        }
+
         // Save the assessment result
         public async Task<bool> SaveAssessmentResultAsync(AssessmentResult result)
         {

@@ -8,8 +8,7 @@ namespace Mental_Health_Wellness_Tracker
         public ProfilePage()
         {
             InitializeComponent();
-            // All data loading and logic are handled by the ProfileViewModel.
-            // The BindingContext is set in ProfilePage.xaml
+            BindingContext = new ViewModels.ProfileViewModel();
         }
 
         // All fields, data loading, saving, and navigation logic are moved to the ViewModel.

@@ -17,6 +17,8 @@ namespace Mental_Health_Wellness_Tracker.Services
 
         // Retrieve assessment history for a specific user
         Task<List<AssessmentResult>> GetAssessmentHistoryAsync(string userId);
+        Task<List<string>> GetAvailableTestTypesAsync();
+        Task<string> ChooseRandomTestTypeAsync();
 
         // Sync pending assessments that have not yet been uploaded to the server
         Task SyncPendingAssessmentsAsync();
@@ -28,7 +30,9 @@ namespace Mental_Health_Wellness_Tracker.Services
         //// Sync pending diary entries that have not yet been uploaded to the server
         //Task SyncPendingDiaryEntriesAsync();
         // Retrieve all diary entries from the cloud (for community page)
-        Task<List<DiaryEntry>> GetAllDiaryEntriesFromCloudAsync();
+        Task<List<CloudDiaryEntry>> GetAllDiaryEntriesFromCloudAsync();
+        Task<bool> UpdateDiaryEntryContentAsync(string firestoreId, string content);
+        Task<bool> DeleteDiaryEntryAsync(string firestoreId);
         // User profile methods
         Task<bool> SaveUserProfileAsync(UserProfile profile);
         // Retrieve user profile by user ID

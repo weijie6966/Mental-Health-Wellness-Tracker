@@ -25,7 +25,7 @@
     <Grid>
         <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
 
-        <Grid RowDefinitions="Auto, *, Auto, 80">
+        <Grid RowDefinitions="Auto, *, 80">
 
             <Label Grid.Row="0" Text="COMMUNITY" FontFamily="BrushFont" FontSize="35" TextColor="{StaticResource TextCyan}" HorizontalOptions="Center" Margin="0,30,0,10"/>
 
@@ -105,65 +105,15 @@
        
                                                    Margin="0,0,0,10"/>
 
-                                    <Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="10" VerticalOptions="End" HorizontalOptions="Start">
-
-                                        <Button Grid.Column="0" Text="{Binding LikesText}" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=LikeCommand}" CommandParameter="{Binding .}" TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
-
-                                        <Button Grid.Column="1" Text="{Binding CommentsText}" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=CommentViewToggleCommand}" CommandParameter="{Binding .}" TextColor="Black" BackgroundColor="Transparent" BorderColor="Black" BorderWidth="1" CornerRadius="15" Padding="5,0" HeightRequest="30" FontSize="12"/>
-
-                                    </Grid>
                                 </VerticalStackLayout>
                             </Border>
-
-
-                            <VerticalStackLayout IsVisible="{Binding IsCommentsVisible}" Padding="10" BackgroundColor="{StaticResource CommentBGColor}">
-                                <Label Text="Recent Comments" FontAttributes="Bold" TextColor="White" Margin="0,5,0,5"/>
-                                <CollectionView ItemsSource="{Binding CommentsList}">
-
-                                    <CollectionView.ItemTemplate>
-                                        <DataTemplate>
-
-                                            <VerticalStackLayout Margin="0, 0, 0, 8">
-                                                <Label>
-
-                                                    <Label.FormattedText>
-                                                        <FormattedString>
-
-                                                            <Span Text="{Binding Username}" FontAttributes="Bold" TextColor="{StaticResource TextCyan}"/>
-                                                            <Span 
-                                                                Text="  "/>
-                                                            <Span Text="{Binding Text}" TextColor="White"/>
-
-                                                        </FormattedString>
-                                                    </Label.FormattedText>
-
-                                                </Label>
-                                                <Label Text="{Binding TimeDisplay}" TextColor="Gray" FontSize="10" Margin="0,2,0,0"/>
-
-                                            </VerticalStackLayout>
-                                        </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-
-                                </CollectionView>
-                            </VerticalStackLayout>
-                            <BoxView Color="{StaticResource CommentBGColor}" HeightRequest="2" IsVisible="{Binding IsCommentsVisible}"/>
-
-
                         </VerticalStackLayout>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <Border Grid.Row="2" StrokeShape="RoundRectangle 25" Background="{StaticResource InputGradient}" StrokeThickness="0" HeightRequest="50" Margin="20, 10, 20, 0" IsVisible="{Binding IsInputVisible}">
 
-                <Grid ColumnDefinitions="*, Auto">
-                    <Entry Text="{Binding CommentText}" Grid.Column="0" Placeholder="Write a comment..." PlaceholderColor="#33000000" TextColor="Black" Margin="15, 0" BackgroundColor="Transparent"/>
-                    <Button Grid.Column="1" Text="SEND" Command="{Binding CommentSendCommand}" TextColor="Black" BackgroundColor="#00E5FF" CornerRadius="25" Margin="0, 5, 5, 5" WidthRequest="80"/>
-                </Grid>
-            </Border>
-
-
-            <Border Grid.Row="3" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
+            <Border Grid.Row="2" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
                 <Grid ColumnDefinitions="*,*,*,*,*">
                     <Button Grid.Column="0" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                     <Button Grid.Column="1" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>

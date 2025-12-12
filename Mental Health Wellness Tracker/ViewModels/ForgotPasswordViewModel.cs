@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker;
+using Mental_Health_Wellness_Tracker.Services;
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class ForgotPasswordViewModel : ViewModelBase
     {
+        private readonly IAuthService _authService = new AuthService();
+
         // Data Properties (Fody handles INPC)
         public string Email { get; set; }
         public string NewPassword { get; set; }
@@ -77,20 +80,16 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 await Application.Current.MainPage.DisplayAlert("Error", "Please enter your email address.", "OK");
                 return;
             }
-            if (!inputEmail.Contains("@") || !inputEmail.EndsWith("@gmail.com"))
-            {
-                await Application.Current.MainPage.DisplayAlert("Invalid Email", "Please use a valid Google account (must end in lowercase @gmail.com).", "OK");
-                return;
-            }
 
-            string storedEmail = Preferences.Get("UserEmail", string.Empty);
-            if (inputEmail != storedEmail)
+            try
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "This email is not registered. Please create a new account.", "OK");
-                return;
+                await _authService.SendPasswordResetEmailAsync(inputEmail);
+                await Application.Current.MainPage.DisplayAlert("Sent", $"Password reset link sent to {inputEmail}. Please check your inbox.", "OK");
             }
-
-            await Application.Current.MainPage.DisplayAlert("Sent", $"Verification code sent to {inputEmail}", "OK");
+            catch (Exception ex)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+            }
         }
 
         private async Task OnResetPasswordClicked()
@@ -98,18 +97,10 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             string email = Email?.Trim();
             string newPass = NewPassword;
             string confirmPass = ConfirmPassword;
-            string code = VerificationCode;
 
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(newPass) || string.IsNullOrEmpty(confirmPass) || string.IsNullOrEmpty(code))
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(newPass) || string.IsNullOrEmpty(confirmPass))
             {
                 await Application.Current.MainPage.DisplayAlert("Error", "Please fill in all fields.", "OK");
-                return;
-            }
-
-            string storedEmail = Preferences.Get("UserEmail", string.Empty);
-            if (email != storedEmail)
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "Email does not match our records.", "OK");
                 return;
             }
 
@@ -119,7 +110,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 return;
             }
 
-            if (!IsPasswordValid(newPass))
+            if (!_authService.IsPasswordValid(newPass))
             {
                 await Application.Current.MainPage.DisplayAlert("Weak Password",
                     "Password must contain at least:\n- One Uppercase letter\n- One Lowercase letter\n- One Number",
@@ -127,17 +118,16 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 return;
             }
 
-            // SUCCESS: Overwrite the old password
-            Preferences.Set("UserPassword", newPass);
-
-            await Application.Current.MainPage.DisplayAlert("Success", "Your password has been reset! You can now log in.", "OK");
-
-            await Application.Current.MainPage.Navigation.PopToRootAsync();
-        }
-
-        private bool IsPasswordValid(string password)
-        {
-            return password.Any(char.IsUpper) && password.Any(char.IsLower) && password.Any(char.IsDigit);
+            try
+            {
+                await _authService.SendPasswordResetEmailAsync(email);
+                await Application.Current.MainPage.DisplayAlert("Check Your Email", "We sent you a reset link. Follow it to set your new password.", "OK");
+                await Application.Current.MainPage.Navigation.PopToRootAsync();
+            }
+            catch (Exception ex)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+            }
         }
 
         private void OnToggleNewPasswordClicked(object parameter)

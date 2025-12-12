@@ -8,6 +8,7 @@ namespace Mental_Health_Wellness_Tracker.Models
     public class Post : INotifyPropertyChanged
     {
         // Data Fields
+        public string FirestoreId { get; set; } // Cloud document id for edit/delete actions
         public string UserId { get; set; } // Added for deletion/editing checks
         public string Username { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;

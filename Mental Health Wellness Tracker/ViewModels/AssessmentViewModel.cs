@@ -2,20 +2,22 @@
 using System.Windows.Input;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
-using Microsoft.Extensions.DependencyInjection;
 using Mental_Health_Wellness_Tracker.Views;
 using Mental_Health_Wellness_Tracker.Services;
 using Mental_Health_Wellness_Tracker.Models;
 using Microsoft.Maui.Storage;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     // FIX: Class uses the base AssessmentQuestion model directly
     public class AssessmentViewModel : ViewModelBase
     {
-        private readonly IAssessmentRepository _assessmentRepository;
+        private readonly IAssessmentRepository _assessmentRepository = new AssessmentRepository();
+
+        private string _activeTestType = "PSS";
 
         // FIX: ObservableCollection now holds the base AssessmentQuestion model
         public ObservableCollection<AssessmentQuestion> Questions { get; set; } = new ObservableCollection<AssessmentQuestion>();
@@ -32,32 +34,60 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand SubmitCommand { get; }
         public ICommand NavigateCommand { get; }
 
-        public AssessmentViewModel(IAssessmentRepository assessmentRepository)
+        public AssessmentViewModel()
         {
-            _assessmentRepository = assessmentRepository;
-            LoadQuestions();
-
             NextCommand = new RelayCommand(_ => MoveNext(), _ => CanMoveNext());
             PreviousCommand = new RelayCommand(_ => MovePrevious(), _ => CanMovePrevious());
-            SelectOptionCommand = new RelayCommand<int>(score => SelectOption(score));
+            SelectOptionCommand = new RelayCommand<object>(score => SelectOption(score));
             SubmitCommand = new RelayCommand(async _ => await SubmitAssessment(), _ => CanSubmit());
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
 
+            _ = InitializeAsync();
+        }
+
+        private async Task InitializeAsync()
+        {
+            await LoadQuestionsAsync();
             CurrentQuestion = Questions.FirstOrDefault();
+            UpdateQuestionState();
         }
 
-        private void LoadQuestions()
+        private async Task LoadQuestionsAsync()
         {
-            // FIX: Uses QuestionText property from AssessmentQuestion.cs
-            Questions.Add(new AssessmentQuestion { Id = 1, QuestionText = "I have been feeling down, depressed, or hopeless." });
-            Questions.Add(new AssessmentQuestion { Id = 2, QuestionText = "I have had little interest or pleasure in doing things." });
-            Questions.Add(new AssessmentQuestion { Id = 3, QuestionText = "I have had trouble falling or staying asleep, or sleeping too much." });
-            Questions.Add(new AssessmentQuestion { Id = 4, QuestionText = "I have been feeling tired or having little energy." });
-            Questions.Add(new AssessmentQuestion { Id = 5, QuestionText = "I have had poor appetite or overeating." });
+            Questions.Clear();
+
+            _activeTestType = await _assessmentRepository.ChooseRandomTestTypeAsync();
+
+            var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(_activeTestType);
+
+            if (fetched != null && fetched.Count > 0)
+            {
+                foreach (var q in fetched)
+                {
+                    q.SelectedScore = null;
+                    Questions.Add(q);
+                }
+            }
+            else
+            {
+                // Fallback to a minimal built-in set if the repository is empty
+                Questions.Add(new AssessmentQuestion { Id = 1, QuestionText = "I have been feeling down, depressed, or hopeless." });
+                Questions.Add(new AssessmentQuestion { Id = 2, QuestionText = "I have had little interest or pleasure in doing things." });
+                Questions.Add(new AssessmentQuestion { Id = 3, QuestionText = "I have had trouble falling or staying asleep, or sleeping too much." });
+                Questions.Add(new AssessmentQuestion { Id = 4, QuestionText = "I have been feeling tired or having little energy." });
+                Questions.Add(new AssessmentQuestion { Id = 5, QuestionText = "I have had poor appetite or overeating." });
+            }
+
+            CurrentQuestionIndex = 0;
         }
 
-        private void SelectOption(int score)
+        private void SelectOption(object parameter)
         {
+            if (parameter == null) return;
+            if (!int.TryParse(parameter.ToString(), out int score))
+            {
+                return;
+            }
             if (CurrentQuestion != null)
             {
                 // FIX: Uses the SelectedScore property directly from the model (now available)
@@ -65,6 +95,10 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 if (CanMoveNext())
                 {
                     MoveNext();
+                }
+                else
+                {
+                    UpdateQuestionState();
                 }
             }
         }
@@ -76,9 +110,15 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 CurrentQuestionIndex++;
                 CurrentQuestion = Questions[CurrentQuestionIndex];
             }
+            UpdateQuestionState();
+        }
+
+        private void UpdateQuestionState()
+        {
             ((RelayCommand)NextCommand).RaiseCanExecuteChanged();
             ((RelayCommand)PreviousCommand).RaiseCanExecuteChanged();
             ((RelayCommand)SubmitCommand).RaiseCanExecuteChanged();
+            OnPropertyChanged(nameof(CurrentQuestion));
             OnPropertyChanged(nameof(QuestionCounterDisplay));
             OnPropertyChanged(nameof(IsNotFirstQuestion));
             OnPropertyChanged(nameof(IsNotLastQuestion));
@@ -93,13 +133,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 CurrentQuestionIndex--;
                 CurrentQuestion = Questions[CurrentQuestionIndex];
             }
-            ((RelayCommand)NextCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)PreviousCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)SubmitCommand).RaiseCanExecuteChanged();
-            OnPropertyChanged(nameof(QuestionCounterDisplay));
-            OnPropertyChanged(nameof(IsNotFirstQuestion));
-            OnPropertyChanged(nameof(IsNotLastQuestion));
-            OnPropertyChanged(nameof(IsSubmitVisible));
+            UpdateQuestionState();
         }
         private bool CanMovePrevious() => CurrentQuestionIndex > 0;
         private bool CanSubmit() => CurrentQuestionIndex == Questions.Count - 1 && Questions.All(q => q.SelectedScore.HasValue);
@@ -109,31 +143,37 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (!CanSubmit()) return;
 
-            int totalScore = Questions.Sum(q => q.SelectedScore.GetValueOrDefault());
+            int totalScore = Questions.Sum(CalculateScore);
 
             try
             {
-                string userId = Preferences.Get("UserId", string.Empty);
+                string userId = await SecureStorage.GetAsync("user_id");
                 if (string.IsNullOrEmpty(userId))
                 {
                     throw new UnauthorizedAccessException("User not authenticated for assessment submission.");
                 }
 
+                var userEmail = await SecureStorage.GetAsync("user_email");
+                var username = Preferences.Get("UsernameKey", "User");
+                var answers = Questions.Select(q => q.SelectedScore ?? 0).ToList();
+
                 // FIX: Uses properties from your AssessmentResult.cs (TotalScore, DateTaken, CalculatedResult)
                 var result = new AssessmentResult
                 {
                     UserId = userId,
-                    TestType = "PHQ-9 (Generic)",
+                    UserEmail = userEmail,
+                    Username = username,
+                    TestType = _activeTestType,
                     TotalScore = totalScore, // Correct property
                     DateTaken = DateTime.UtcNow, // Correct property
                     CalculatedResult = GetCalculatedResult(totalScore), // Correct property
+                    AnswerData = answers
                 };
 
                 await _assessmentRepository.SaveAssessmentResultAsync(result);
 
-                // Navigates to AssessmentDetailPage, passing the result object
-                // Inside SubmitAssessment() method:
-                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new AssessmentDetailPage(result));
+                // Navigate back to the Profile page after completing the assessment
+                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ProfilePage());
             }
             catch (Exception ex)
             {
@@ -151,22 +191,31 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             return "Severe Depression";
         }
 
+        private int CalculateScore(AssessmentQuestion question)
+        {
+            if (question == null || !question.SelectedScore.HasValue) return 0;
+
+            var chosen = question.SelectedScore.Value;
+            var max = question.MaxScore <= 0 ? 3 : question.MaxScore;
+            chosen = Math.Clamp(chosen, 0, max);
+
+            if (question.IsReversed)
+            {
+                return Math.Max(0, max - chosen);
+            }
+
+            return chosen;
+        }
+
         private async Task OnNavTapped(string destination)
         {
             if (destination == null) return;
-
-            // 1. Get the MAUI Service Provider
-            // We access the service container to ask it to create the pages for us.
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
             Page nextPage = destination switch
             {
-                // FIX: Use GetService<T>() for all pages that require a ViewModel parameter
-                "Community" => services.GetService<CommunityPage>(),
-                "Diary" => services.GetService<WriteDiaryPage>(),
-                "Stats" => services.GetService<AnalyticPage>(),
-                "Profile" => services.GetService<ProfilePage>(),
+                "Community" => new CommunityPage(),
+                "Diary" => new WriteDiaryPage(),
+                "Stats" => new AnalyticPage(),
+                "Profile" => new ProfilePage(),
                 _ => null
             };
 

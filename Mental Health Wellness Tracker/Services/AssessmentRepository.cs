@@ -12,6 +12,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Net;
 using Google.Cloud.Firestore;
 using Google.Protobuf.WellKnownTypes;
 
@@ -25,8 +26,8 @@ namespace Mental_Health_Wellness_Tracker.Services
         // Your Database Project ID
         private const string ProjectId = "mental-health-wellness-tracker";
 
-        // Your Firebase Web API Key
-        private const string WebApiKey = "API-KEY";
+        // Firebase Web API Key used for Firestore REST calls (matches AuthService)
+        private const string WebApiKey = "AIzaSyARXVMSRY2JvzMJue2jWUoCd44bv1TYBaE";
 
         public AssessmentRepository()
         {
@@ -142,6 +143,9 @@ namespace Mental_Health_Wellness_Tracker.Services
                         // 注意：整数在 Firestore REST API 中必须转为字符串传给 integerValue
                         moodScore = new { integerValue = localEntry.MoodScore.ToString() },
 
+                        // Social counters start at zero
+                        comments = new { integerValue = "0" },
+
                         // This will now send the actual cloud link (if the upload was successful)
                         imgUrl = new { stringValue = localEntry.ImgUrl ?? "" },
 
@@ -207,6 +211,34 @@ namespace Mental_Health_Wellness_Tracker.Services
                 .Where(q => q.TestType == testType)
                 .OrderBy(q => q.OrderIndex)
                 .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAvailableTestTypesAsync()
+        {
+            await InitAsync();
+            var records = await _database.QueryAsync<AssessmentQuestion>(
+                "SELECT DISTINCT TestType FROM AssessmentQuestion WHERE TestType IS NOT NULL AND TRIM(TestType) <> ''");
+
+            return records
+                .Select(r => r.TestType)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct()
+                .ToList();
+        }
+
+        public async Task<string> ChooseRandomTestTypeAsync()
+        {
+            var available = await GetAvailableTestTypesAsync();
+            var pool = available?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList() ?? new List<string>();
+
+            if (pool.Count == 0)
+            {
+                return "PSS";
+            }
+
+            var random = new Random();
+            var index = random.Next(pool.Count);
+            return pool[index];
         }
 
         // Save the assessment result
@@ -511,22 +543,21 @@ namespace Mental_Health_Wellness_Tracker.Services
         //}
 
         // Retrieve everyone's diaries from the cloud (for the community page).
-        public async Task<List<DiaryEntry>> GetAllDiaryEntriesFromCloudAsync()
+        public async Task<List<CloudDiaryEntry>> GetAllDiaryEntriesFromCloudAsync()
         {
             // Check the network
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
-                return new List<DiaryEntry>(); // No internet access, return empty list
+                return new List<CloudDiaryEntry>(); // No internet access, return empty list
 
             // Get Auth Token
             var token = await SecureStorage.GetAsync("auth_token");
             if (string.IsNullOrEmpty(token))
-                return new List<DiaryEntry>();
+                return new List<CloudDiaryEntry>();
 
             using var client = new HttpClient();
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // No auth token needed for public read access
             string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries?key={WebApiKey}";
 
             try
@@ -537,7 +568,7 @@ namespace Mental_Health_Wellness_Tracker.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-                    var resultList = new List<DiaryEntry>();
+                    var resultList = new List<CloudDiaryEntry>();
 
                     // Parse the JSON response
                     using (JsonDocument doc = JsonDocument.Parse(jsonString))
@@ -548,24 +579,42 @@ namespace Mental_Health_Wellness_Tracker.Services
                             {
                                 var fields = docElement.GetProperty("fields");
 
-                                // Helper function to extract string values safely
-                                string GetString(JsonElement elem, string key) =>
-                                    elem.TryGetProperty(key, out var child) && child.TryGetProperty("stringValue", out var val) ? val.GetString() : "";
+                                // Helper functions to extract values safely
+                                string GetString(string key) =>
+                                    fields.TryGetProperty(key, out var child) && child.TryGetProperty("stringValue", out var val) ? val.GetString() : "";
 
-                                string dateStr = GetString(fields, "dateCreated"); // 可能是 timestampValue
+                                int GetInt(string key)
+                                {
+                                    if (fields.TryGetProperty(key, out var child) && child.TryGetProperty("integerValue", out var val))
+                                    {
+                                        return int.TryParse(val.GetString(), out var parsed) ? parsed : 0;
+                                    }
+                                    return 0;
+                                }
+
+                                string dateStr = GetString("dateCreated");
                                 if (fields.TryGetProperty("dateCreated", out var dateField) && dateField.TryGetProperty("timestampValue", out var ts))
                                 {
                                     dateStr = ts.GetString();
                                 }
 
-                                resultList.Add(new DiaryEntry
+                                var firestoreId = docElement.TryGetProperty("name", out var nameProp)
+                                    ? nameProp.GetString()?.Split('/').Last()
+                                    : string.Empty;
+
+                                resultList.Add(new CloudDiaryEntry
                                 {
-                                    UserId = GetString(fields, "userId"),
-                                    Username = GetString(fields, "username"), // Get Username
-                                    Content = GetString(fields, "content"),
-                                    MoodEmoji = GetString(fields, "moodEmoji"),
-                                    DateCreated = DateTime.TryParse(dateStr, out var dt) ? dt : DateTime.Now,
-                                    IsSynced = true // The data from the cloud has definitely been synchronized.
+                                    Id = firestoreId,
+                                    UserId = GetString("userId"),
+                                    UserEmail = GetString("userEmail"),
+                                    Username = GetString("username"),
+                                    Content = GetString("content"),
+                                    MoodEmoji = GetString("moodEmoji"),
+                                    MoodName = GetString("moodName"),
+                                    MoodScore = GetInt("moodScore"),
+                                    ImgUrl = GetString("imgUrl"),
+                                    CommentsCount = GetInt("comments"),
+                                    DateCreated = DateTime.TryParse(dateStr, out var dt) ? dt : DateTime.Now
                                 });
                             }
                         }
@@ -579,7 +628,132 @@ namespace Mental_Health_Wellness_Tracker.Services
                 Debug.WriteLine($"Fetch Cloud Error: {ex.Message}");
             }
 
-            return new List<DiaryEntry>();
+            return new List<CloudDiaryEntry>();
+        }
+
+        public async Task<bool> UpdateDiaryEntryContentAsync(string firestoreId, string content)
+        {
+            if (string.IsNullOrEmpty(firestoreId)) return false;
+
+            var token = await SecureStorage.GetAsync("auth_token");
+            if (string.IsNullOrEmpty(token)) return false;
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var payload = new
+            {
+                fields = new
+                {
+                    content = new { stringValue = content }
+                }
+            };
+
+            var jsonContent = JsonSerializer.Serialize(payload);
+            var request = new HttpRequestMessage(new HttpMethod("PATCH"),
+                $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries/{firestoreId}?key={WebApiKey}&updateMask.fieldPaths=content")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            var response = await client.SendAsync(request);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> DeleteDiaryEntryAsync(string firestoreId)
+        {
+            if (string.IsNullOrEmpty(firestoreId)) return false;
+
+            var token = await SecureStorage.GetAsync("auth_token");
+            if (string.IsNullOrEmpty(token)) return false;
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.DeleteAsync(
+                $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries/{firestoreId}?key={WebApiKey}");
+
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<PostComment> AddDiaryCommentAsync(string diaryId, PostComment comment)
+        {
+            if (string.IsNullOrEmpty(diaryId) || comment == null || string.IsNullOrWhiteSpace(comment.Text)) return null;
+
+            var token = await SecureStorage.GetAsync("auth_token");
+            if (string.IsNullOrEmpty(token)) return null;
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var payload = new
+            {
+                fields = new
+                {
+                    username = new { stringValue = comment.Username ?? "Anonymous" },
+                    text = new { stringValue = comment.Text },
+                    commentTime = new { timestampValue = comment.CommentTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                }
+            };
+
+            var jsonContent = JsonSerializer.Serialize(payload);
+
+            var response = await client.PostAsync(
+                $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries/{diaryId}/comments?key={WebApiKey}",
+                new StringContent(jsonContent, Encoding.UTF8, "application/json"));
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            return comment;
+        }
+
+        public async Task<List<PostComment>> GetDiaryCommentsAsync(string diaryId)
+        {
+            if (string.IsNullOrEmpty(diaryId)) return new List<PostComment>();
+
+            var token = await SecureStorage.GetAsync("auth_token");
+            if (string.IsNullOrEmpty(token)) return new List<PostComment>();
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync(
+                $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/diary_entries/{diaryId}/comments?key={WebApiKey}");
+
+            if (!response.IsSuccessStatusCode) return new List<PostComment>();
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var comments = new List<PostComment>();
+
+            using var doc = JsonDocument.Parse(jsonString);
+            if (doc.RootElement.TryGetProperty("documents", out var documents))
+            {
+                foreach (var docElement in documents.EnumerateArray())
+                {
+                    var fields = docElement.GetProperty("fields");
+
+                    string GetString(string key) =>
+                        fields.TryGetProperty(key, out var child) && child.TryGetProperty("stringValue", out var val) ? val.GetString() : string.Empty;
+
+                    DateTime GetTime()
+                    {
+                        if (fields.TryGetProperty("commentTime", out var timeField) && timeField.TryGetProperty("timestampValue", out var ts))
+                        {
+                            if (DateTime.TryParse(ts.GetString(), out var parsed)) return parsed;
+                        }
+                        return DateTime.UtcNow;
+                    }
+
+                    comments.Add(new PostComment
+                    {
+                        Username = GetString("username"),
+                        Text = GetString("text"),
+                        CommentTime = GetTime()
+                    });
+                }
+            }
+
+            return comments.OrderByDescending(c => c.CommentTime).ToList();
         }
 
         public async Task<bool> SaveUserProfileAsync(UserProfile profile)
@@ -587,6 +761,9 @@ namespace Mental_Health_Wellness_Tracker.Services
             await InitAsync();
             try
             {
+                profile.LastUpdated = DateTime.UtcNow;
+                profile.IsSynced = false;
+
                 // Check if the user already has a profile.
                 var existingProfile = await _database.Table<UserProfile>()
                                                      .Where(p => p.UserId == profile.UserId)
@@ -603,6 +780,9 @@ namespace Mental_Health_Wellness_Tracker.Services
                     // If not, create a new one.
                     await _database.InsertAsync(profile);
                 }
+
+                // Try syncing to the backend
+                _ = SyncUserProfileToCloudAsync(profile);
                 return true;
             }
             catch (Exception ex)
@@ -616,9 +796,121 @@ namespace Mental_Health_Wellness_Tracker.Services
         {
             await InitAsync();
             // Find the file belonging to this UserID.
-            return await _database.Table<UserProfile>()
+            var localProfile = await _database.Table<UserProfile>()
                                   .Where(p => p.UserId == userId)
                                   .FirstOrDefaultAsync();
+
+            if (localProfile != null)
+                return localProfile;
+
+            var cloudProfile = await FetchUserProfileFromCloudAsync(userId);
+            if (cloudProfile != null)
+            {
+                await _database.InsertAsync(cloudProfile);
+                return cloudProfile;
+            }
+
+            return null;
+        }
+
+        private async Task SyncUserProfileToCloudAsync(UserProfile profile)
+        {
+            try
+            {
+                var token = await SecureStorage.GetAsync("auth_token");
+                if (string.IsNullOrEmpty(token)) return;
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var payload = new
+                {
+                    fields = new
+                    {
+                        userId = new { stringValue = profile.UserId },
+                        username = new { stringValue = profile.Username ?? string.Empty },
+                        bio = new { stringValue = profile.Bio ?? string.Empty },
+                        profileImagePath = new { stringValue = profile.ProfileImagePath ?? string.Empty },
+                        lastUpdated = new { timestampValue = profile.LastUpdated.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                    }
+                };
+
+                var jsonContent = JsonSerializer.Serialize(payload);
+                var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+                string createUrl = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/user_profiles?documentId={profile.UserId}&key={WebApiKey}";
+                var response = await client.PostAsync(createUrl, content);
+
+                if (response.StatusCode == HttpStatusCode.Conflict)
+                {
+                    string updateUrl = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/user_profiles/{profile.UserId}?key={WebApiKey}";
+                    var patchRequest = new HttpRequestMessage(new HttpMethod("PATCH"), updateUrl)
+                    {
+                        Content = content
+                    };
+                    response = await client.SendAsync(patchRequest);
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    profile.IsSynced = true;
+                    await _database.UpdateAsync(profile);
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"Profile sync failed: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Profile Sync Exception: {ex.Message}");
+            }
+        }
+
+        private async Task<UserProfile> FetchUserProfileFromCloudAsync(string userId)
+        {
+            try
+            {
+                var token = await SecureStorage.GetAsync("auth_token");
+                if (string.IsNullOrEmpty(token)) return null;
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                string url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents/user_profiles/{userId}?key={WebApiKey}";
+                var response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return null;
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(jsonString);
+                var root = doc.RootElement;
+                if (!root.TryGetProperty("fields", out var fields)) return null;
+
+                string GetString(string key) =>
+                    fields.TryGetProperty(key, out var f) && f.TryGetProperty("stringValue", out var v) ? v.GetString() : string.Empty;
+
+                DateTime lastUpdated = DateTime.UtcNow;
+                if (fields.TryGetProperty("lastUpdated", out var lastField) && lastField.TryGetProperty("timestampValue", out var ts))
+                {
+                    DateTime.TryParse(ts.GetString(), out lastUpdated);
+                }
+
+                return new UserProfile
+                {
+                    UserId = GetString("userId"),
+                    Username = GetString("username"),
+                    Bio = GetString("bio"),
+                    ProfileImagePath = GetString("profileImagePath"),
+                    IsSynced = true,
+                    LastUpdated = lastUpdated
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Profile Download Exception: {ex.Message}");
+                return null;
+            }
         }
 
         // Seed default questions into the database

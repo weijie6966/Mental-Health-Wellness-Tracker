@@ -7,14 +7,13 @@ using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker.Views;
 using Mental_Health_Wellness_Tracker.Models;
 using Mental_Health_Wellness_Tracker.Services;
-using Microsoft.Extensions.DependencyInjection; // Essential for GetService<T>()
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     // Assuming Fody.PropertyChanged or manual INPC for UI updates
     public class ProfileViewModel : ViewModelBase
     {
-        private readonly IAssessmentRepository _repository;
+        private readonly IAssessmentRepository _repository = new AssessmentRepository();
         private UserProfile _userProfile; // Model to hold profile data
 
         // FIX: Properties now rely on the _userProfile model
@@ -42,10 +41,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         public ICommand ContactUsCommand { get; }
         public ICommand AppearingCommand { get; } // For loading data OnAppearing
 
-        // FIX 1: Constructor must accept the repository via DI
-        public ProfileViewModel(IAssessmentRepository repository)
+        public ProfileViewModel()
         {
-            _repository = repository;
             _userProfile = new UserProfile();
 
             // Initialize Commands
@@ -152,10 +149,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             IsMenuVisible = false;
 
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
-            // FIX 4: Use DI for navigation, and pass the required path through the Page's constructor
             await Application.Current.MainPage.Navigation.PushAsync(new ProfilePictureViewPage(_userProfile.ProfileImagePath));
         }
 
@@ -182,14 +175,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // FIX 5: Navigation method for Contact Us page (uses DI)
         private async Task OnContactUsClicked()
         {
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
-            var nextPage = services.GetService<ContactUsPage>();
-            if (nextPage != null)
-            {
-                await Application.Current.MainPage.Navigation.PushAsync(nextPage);
-            }
+            await Application.Current.MainPage.Navigation.PushAsync(new ContactUsPage());
         }
 
         // FIX 6: All bottom navigation uses DI
@@ -197,15 +183,12 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (destination == null || destination == "Profile") return;
 
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
             Page nextPage = destination switch
             {
-                "Community" => services.GetService<CommunityPage>(),
-                "List" => services.GetService<AssessmentPage>(),
-                "Diary" => services.GetService<WriteDiaryPage>(),
-                "Stats" => services.GetService<AnalyticPage>(),
+                "Community" => new CommunityPage(),
+                "List" => new AssessmentPage(),
+                "Diary" => new WriteDiaryPage(),
+                "Stats" => new AnalyticPage(),
                 _ => null
             };
 

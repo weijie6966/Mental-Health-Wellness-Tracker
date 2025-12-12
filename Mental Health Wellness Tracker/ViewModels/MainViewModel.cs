@@ -6,14 +6,13 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker.Services;
 using Mental_Health_Wellness_Tracker.Views;
-using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
-        private readonly IAuthService _authService;
+        private readonly IAuthService _authService = new AuthService();
 
         // Data Properties bound to the View
         public string Email { get; set; }
@@ -34,15 +33,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // NEW: Command to handle taps on unimplemented features (social buttons)
         public ICommand UnimplementedCommand { get; }
 
-        // FIX: Constructor uses Dependency Injection (DI)
-        public MainViewModel(IAuthService authService)
+        public MainViewModel()
         {
-            _authService = authService;
-
             LoginCommand = new RelayCommand(async _ => await OnLoginClicked());
             TogglePasswordCommand = new RelayCommand(OnTogglePasswordClicked);
 
-            // FIX: Navigation commands use the DI Helper
             CreateAccountCommand = new RelayCommand(async _ => await OnNavTapped(nameof(SignUpPage)));
             ForgotPasswordCommand = new RelayCommand(async _ => await OnNavTapped(nameof(ForgotPasswordPage)));
 
@@ -71,9 +66,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             {
                 // Login uses the injected service
                 string userId = await _authService.LoginAsync(Email, Password);
-
-                // Save essential user ID
-                await SecureStorage.Default.SetAsync("UserId", userId);
 
                 // Navigate to the next page (ProfilePage) using DI
                 await OnNavTapped(nameof(ProfilePage));
@@ -104,20 +96,20 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             OnPropertyChanged(nameof(IsPasswordEntryHidden));
         }
 
-        // --- DI Navigation Helper ---
         private async Task OnNavTapped(string destination)
         {
             if (destination == null) return;
 
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
-            // Uses reflection to resolve the page type and instance
-            Type pageType = Type.GetType($"Mental_Health_Wellness_Tracker.Views.{destination}");
-
-            if (pageType != null)
+            Page nextPage = destination switch
             {
-                Page nextPage = (Page)services.GetRequiredService(pageType);
+                nameof(SignUpPage) => new SignUpPage(),
+                nameof(ForgotPasswordPage) => new ForgotPasswordPage(),
+                nameof(ProfilePage) => new ProfilePage(),
+                _ => null
+            };
+
+            if (nextPage != null)
+            {
                 await Application.Current.MainPage.Navigation.PushAsync(nextPage);
             }
         }

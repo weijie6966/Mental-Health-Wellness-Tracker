@@ -10,6 +10,7 @@ namespace Mental_Health_Wellness_Tracker
         public WriteDiaryPage()
         {
             InitializeComponent();
+            BindingContext = new ViewModels.WriteDiaryViewModel();
         }
     }
 }

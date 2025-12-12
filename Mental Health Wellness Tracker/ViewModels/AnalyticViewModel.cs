@@ -4,14 +4,18 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker.Models;
+using Mental_Health_Wellness_Tracker.Services;
 using Mental_Health_Wellness_Tracker.Views;
-using Microsoft.Extensions.DependencyInjection; // ADDED: Needed for GetService<T>()
 
 namespace Mental_Health_Wellness_Tracker.ViewModels
 {
     public class AnalyticViewModel : ViewModelBase
     {
+        private readonly IAssessmentRepository _repository = new AssessmentRepository();
+        private string _userId;
+
         // Properties bound to the View (Current Statistics)
         public string ScoreDisplay { get; private set; }
         public string StatusDisplay { get; private set; }
@@ -35,10 +39,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         public AnalyticViewModel()
         {
-            // Initial data load in constructor
-            // NOTE: Static data access requires careful management of state and synchronization
-            LoadStatistics();
-            LoadHistory();
+            _ = InitializeAsync();
 
             // FIX 2: Change parameter type in RelayCommand to AssessmentResult
             ViewHistoryDetailCommand = new RelayCommand(async param =>
@@ -47,28 +48,50 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             NavigateCommand = new RelayCommand(async param => await OnNavTapped(param?.ToString()));
         }
 
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                _userId = await SecureStorage.GetAsync("user_id");
+                await LoadHistoryAsync();
+                LoadStatistics();
+            }
+            catch (Exception ex)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", $"Unable to load analytics: {ex.Message}", "OK");
+            }
+        }
+
         // --- Core Logic ---
 
         public void LoadStatistics()
         {
-            // ASSUMPTION: You are now using static properties on AssessmentResult for current state
-            int score = AssessmentState.CurrentScore;
+            var latestResult = History?.FirstOrDefault();
+            if (latestResult == null)
+            {
+                ScoreDisplay = "-";
+                StatusDisplay = "No data yet";
+                Recommendation = "Take your first assessment to see your stats.";
+                ResetBarData();
+                NotifyStatisticProperties();
+                return;
+            }
+
+            int score = latestResult.TotalScore;
             ScoreDisplay = score.ToString();
-            StatusDisplay = AssessmentState.GetStatusMessage(score);
+            StatusDisplay = GetStatusMessage(score);
 
             if (score <= 15) Recommendation = "Great spot! Keep practicing self-care.";
             else if (score <= 30) Recommendation = "Mild stress. Get enough sleep.";
             else if (score <= 45) Recommendation = "Moderate stress. Use the Diary feature.";
             else Recommendation = "High distress. Please reach out to a professional.";
 
-            // ASSUMPTION: QuestionScores property exists on AssessmentResult and returns List<int>
-            var scores = AssessmentState.QuestionScores;
+            var scores = latestResult.AnswerData;
 
             // Reset state if no scores are present
             if (scores == null || scores.Count == 0)
             {
-                BarLowHeight = 0; BarNormalHeight = 0; BarHighHeight = 0;
-                CountLow = "0"; CountNormal = "0"; CountHigh = "0";
+                ResetBarData();
             }
             else
             {
@@ -86,7 +109,21 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 BarHighHeight = high * m * 150;     // *150 added for visual scaling consistency
             }
 
-            // Notify all relevant properties to update the UI
+            NotifyStatisticProperties();
+        }
+
+        private void ResetBarData()
+        {
+            BarLowHeight = 0;
+            BarNormalHeight = 0;
+            BarHighHeight = 0;
+            CountLow = "0";
+            CountNormal = "0";
+            CountHigh = "0";
+        }
+
+        private void NotifyStatisticProperties()
+        {
             OnPropertyChanged(nameof(ScoreDisplay));
             OnPropertyChanged(nameof(StatusDisplay));
             OnPropertyChanged(nameof(Recommendation));
@@ -98,36 +135,29 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             OnPropertyChanged(nameof(BarHighHeight));
         }
 
-        public void LoadHistory()
+        public async Task LoadHistoryAsync()
         {
-            // ASSUMPTION: AssessmentResult.History property exists and returns List<AssessmentResult>
-            // FIX 3: Property access is corrected (History is now List<AssessmentResult>)
-            // FIX 4: Use DateTaken property on the AssessmentResult model
-            History = AssessmentState.History.OrderByDescending(x => x.DateTaken).ToList();
+            if (string.IsNullOrEmpty(_userId))
+            {
+                History = new List<AssessmentResult>();
+                OnPropertyChanged(nameof(History));
+                return;
+            }
+
+            var results = await _repository.GetAssessmentHistoryAsync(_userId);
+            History = results
+                ?.OrderByDescending(x => x.DateTaken)
+                .ToList()
+                ?? new List<AssessmentResult>();
+
             OnPropertyChanged(nameof(History));
+            LoadStatistics();
         }
 
         private async Task OnViewHistoryDetailClicked(AssessmentResult result)
         {
             if (result != null)
             {
-                // Retrieve the service provider
-                IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-
-                if (services == null) return;
-
-                // FIX 5: Use DI to create the page, ensuring AssessmentDetailViewModel is injected
-                var nextPage = services.GetService<AssessmentDetailPage>();
-
-                // You will need to manually set the BindingContext here, or modify the 
-                // AssessmentDetailPage constructor to accept the result data as well.
-                // Assuming AssessmentDetailPage has a method to initialize with data:
-                // nextPage.InitializeWithData(result); 
-
-                // NOTE: Since you are using a new AssessmentDetailPage(historyItem) 
-                // pattern, we'll revert to that for simplicity, but acknowledge it 
-                // means AssessmentDetailPage must manually create its ViewModel.
-
                 await Application.Current.MainPage.Navigation.PushAsync(new AssessmentDetailPage(result));
             }
         }
@@ -136,17 +166,12 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (destination == null || destination == "Stats") return;
 
-            // FIX 6: Use the service provider to retrieve the page, resolving the DI issue
-            IServiceProvider services = Application.Current?.Handler?.MauiContext?.Services;
-            if (services == null) return;
-
             Page nextPage = destination switch
             {
-                // Use GetService<T>() for all pages requiring DI
-                "Community" => services.GetService<CommunityPage>(),
-                "List" => services.GetService<AssessmentPage>(),
-                "Diary" => services.GetService<WriteDiaryPage>(),
-                "Profile" => services.GetService<ProfilePage>(),
+                "Community" => new CommunityPage(),
+                "List" => new AssessmentPage(),
+                "Diary" => new WriteDiaryPage(),
+                "Profile" => new ProfilePage(),
                 _ => null
             };
 
@@ -157,10 +182,17 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         }
 
         // Expose public method to call from page OnAppearing
-        public void OnAppearing()
+        public async Task OnAppearingAsync()
         {
-            LoadStatistics();
-            LoadHistory();
+            await LoadHistoryAsync();
+        }
+
+        private string GetStatusMessage(int score)
+        {
+            if (score <= 15) return "Minimal Stress";
+            if (score <= 30) return "Mild Stress";
+            if (score <= 45) return "Moderate Stress";
+            return "High Stress/Severe Distress";
         }
     }
 }

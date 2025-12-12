@@ -5,14 +5,19 @@ namespace Mental_Health_Wellness_Tracker.Views
 {
     public partial class AnalyticPage : ContentPage
     {
-        // Add a constructor that accepts the ViewModel
-        // MAUI's DI container automatically passes the required ViewModel instance here.
-        public AnalyticPage(AnalyticViewModel viewModel)
+        private readonly AnalyticViewModel _viewModel;
+
+        public AnalyticPage()
         {
             InitializeComponent();
+            _viewModel = new AnalyticViewModel();
+            BindingContext = _viewModel;
+        }
 
-            // Set the BindingContext here, after the ViewModel is injected.
-            this.BindingContext = viewModel;
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await _viewModel.OnAppearingAsync();
         }
     }
 }

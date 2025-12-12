@@ -8,6 +8,7 @@ namespace Mental_Health_Wellness_Tracker
         public SignUpPage()
         {
             InitializeComponent();
+            BindingContext = new ViewModels.SignUpViewModel();
         }
 
         // All logic and event handlers have been moved to SignUpViewModel.cs.

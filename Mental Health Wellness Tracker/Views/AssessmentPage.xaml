@@ -37,16 +37,16 @@
                        FontFamily="ComfortaaRegular"
                        HorizontalOptions="Center"/>
 
-                <Border StrokeShape="RoundRectangle 12" 
-                        BackgroundColor="#20FFFFFF" 
-                        StrokeThickness="1" 
-                        Stroke="{StaticResource PrimaryBlue}" 
+                <Border StrokeShape="RoundRectangle 12"
+                        BackgroundColor="Snow"
+                        StrokeThickness="1"
+                        Stroke="{StaticResource PrimaryBlue}"
                         Padding="25"
                         Margin="0, 20, 0, 20">
                     <VerticalStackLayout Spacing="20">
 
                         <Label Text="{Binding CurrentQuestion.QuestionText}"
-                               TextColor="White"
+                               TextColor="#0E4D5A"
                                FontSize="18"
                                FontFamily="ComfortaaRegular"
                                VerticalOptions="CenterAndExpand"/>

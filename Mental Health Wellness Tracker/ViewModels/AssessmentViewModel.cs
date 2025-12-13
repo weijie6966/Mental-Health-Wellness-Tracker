@@ -184,11 +184,23 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // FIX: Method name changed to match the property name
         private string GetCalculatedResult(int score)
         {
-            if (score <= 4) return "Minimal Depression";
-            if (score <= 9) return "Mild Depression";
-            if (score <= 14) return "Moderate Depression";
-            if (score <= 19) return "Moderately Severe Depression";
-            return "Severe Depression";
+            switch (_activeTestType)
+            {
+                case "PSS":
+                    if (score <= 13) return "Low Stress";
+                    if (score <= 26) return "Moderate Stress";
+                    return "High Perceived Stress";
+                case "Rosenberg":
+                    if (score < 15) return "Low Self-Esteem";
+                    if (score <= 25) return "Normal Self-Esteem";
+                    return "High Self-Esteem";
+                default:
+                    if (score <= 4) return "Minimal Depression";
+                    if (score <= 9) return "Mild Depression";
+                    if (score <= 14) return "Moderate Depression";
+                    if (score <= 19) return "Moderately Severe Depression";
+                    return "Severe Depression";
+            }
         }
 
         private int CalculateScore(AssessmentQuestion question)
@@ -199,12 +211,30 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             var max = question.MaxScore <= 0 ? 3 : question.MaxScore;
             chosen = Math.Clamp(chosen, 0, max);
 
-            if (question.IsReversed)
+            return _activeTestType switch
             {
-                return Math.Max(0, max - chosen);
-            }
+                "PSS" => CalculatePssScore(question, chosen),
+                "Rosenberg" => CalculateRosenbergScore(question, chosen),
+                _ => question.IsReversed ? Math.Max(0, max - chosen) : chosen
+            };
+        }
 
-            return chosen;
+        private int CalculatePssScore(AssessmentQuestion question, int selectedScore)
+        {
+            // PSS uses a 0-4 scale with reverse scoring for items 4, 5, 7, and 8.
+            const int maxScore = 4;
+            var normalized = Math.Clamp(selectedScore, 0, maxScore);
+
+            return question.IsReversed ? Math.Max(0, maxScore - normalized) : normalized;
+        }
+
+        private int CalculateRosenbergScore(AssessmentQuestion question, int selectedScore)
+        {
+            // Rosenberg Self-Esteem Scale uses a 0-3 scale with reverse scoring on negative-valence items.
+            const int maxScore = 3;
+            var normalized = Math.Clamp(selectedScore, 0, maxScore);
+
+            return question.IsReversed ? Math.Max(0, maxScore - normalized) : normalized;
         }
 
         private async Task OnNavTapped(string destination)

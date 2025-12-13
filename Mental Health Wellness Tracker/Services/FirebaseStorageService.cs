@@ -1,6 +1,7 @@
 ﻿using Firebase.Storage;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace Mental_Health_Wellness_Tracker.Services
     {
         private const string StorageBucket = "mental-health-wellness-tracker.firebasestorage.app";
 
-        public async Task<string> UploadImageAsync(Stream imageStream, string fileName, string authToken)
+        public async Task<string> UploadImageAsync(Stream imageStream, string fileName, string authToken, string folderName = "diary_images")
         {
             try
             {
@@ -29,7 +30,7 @@ namespace Mental_Health_Wellness_Tracker.Services
                 // 2. Child(fileName): Filename
                 // 3. PutAsync(imageStream): Starts the upload
                 var downloadUrl = await storage
-                    .Child("diary_images")
+                    .Child(folderName)
                     .Child(fileName)
                     .PutAsync(imageStream);
 

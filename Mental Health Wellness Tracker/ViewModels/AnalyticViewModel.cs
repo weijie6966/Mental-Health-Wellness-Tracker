@@ -54,7 +54,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             {
                 _userId = await SecureStorage.GetAsync("user_id");
                 await LoadHistoryAsync();
-                LoadStatistics();
             }
             catch (Exception ex)
             {
@@ -64,7 +63,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         // --- Core Logic ---
 
-        public void LoadStatistics()
+        public async Task LoadStatisticsAsync()
         {
             var latestResult = History?.FirstOrDefault();
             if (latestResult == null)
@@ -81,12 +80,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             ScoreDisplay = score.ToString();
             StatusDisplay = GetStatusMessage(score);
 
-            if (score <= 15) Recommendation = "Great spot! Keep practicing self-care.";
-            else if (score <= 30) Recommendation = "Mild stress. Get enough sleep.";
-            else if (score <= 45) Recommendation = "Moderate stress. Use the Diary feature.";
-            else Recommendation = "High distress. Please reach out to a professional.";
+            if (score < 15) Recommendation = "Self-esteem is low. Consider journaling what you appreciate about yourself.";
+            else if (score <= 25) Recommendation = "You are in the normal range—keep reinforcing healthy self-talk.";
+            else Recommendation = "High self-esteem detected. Maintain balance with mindful reflection.";
 
-            var scores = latestResult.AnswerData;
+            var scores = await ScoreAnswersAsync(latestResult);
 
             // Reset state if no scores are present
             if (scores == null || scores.Count == 0)
@@ -95,9 +93,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
             else
             {
-                int low = scores.Count(s => s <= 1);
-                int normal = scores.Count(s => s == 2);
-                int high = scores.Count(s => s == 3);
+                var (low, normal, high) = CalculateSymptomFrequency(scores);
 
                 CountLow = low.ToString();
                 CountNormal = normal.ToString();
@@ -112,6 +108,48 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
 
             NotifyStatisticProperties();
+        }
+
+        private async Task<List<int>> ScoreAnswersAsync(AssessmentResult result)
+        {
+            if (result?.AnswerData == null || result.AnswerData.Count == 0)
+            {
+                return new List<int>();
+            }
+
+            var questions = await _repository.GetQuestionsByTestTypeAsync(result.TestType) ?? new List<AssessmentQuestion>();
+            var orderedQuestions = questions.OrderBy(q => q.OrderIndex).ToList();
+
+            var scored = new List<int>();
+            var count = Math.Min(result.AnswerData.Count, orderedQuestions.Count);
+
+            for (int i = 0; i < count; i++)
+            {
+                var question = orderedQuestions[i];
+                var rawSelection = result.AnswerData[i];
+                var questionMax = question.MaxScore <= 0 ? 3 : question.MaxScore;
+                var normalized = Math.Clamp(rawSelection, 0, questionMax);
+
+                var scoredValue = question.IsReversed ? Math.Max(0, questionMax - normalized) : normalized;
+
+                scored.Add(scoredValue);
+            }
+
+            return scored;
+        }
+
+        private (int low, int normal, int high) CalculateSymptomFrequency(List<int> scores)
+        {
+            int low = 0, normal = 0, high = 0;
+
+            foreach (var score in scores)
+            {
+                if (score == 0) low++;
+                else if (score == 1) normal++;
+                else high++;
+            }
+
+            return (low, normal, high);
         }
 
         private void ResetBarData()
@@ -153,7 +191,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 ?? new List<AssessmentResult>();
 
             OnPropertyChanged(nameof(History));
-            LoadStatistics();
+            await LoadStatisticsAsync();
         }
 
         private async Task OnViewHistoryDetailClicked(AssessmentResult result)
@@ -191,10 +229,9 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private string GetStatusMessage(int score)
         {
-            if (score <= 15) return "Minimal Stress";
-            if (score <= 30) return "Mild Stress";
-            if (score <= 45) return "Moderate Stress";
-            return "High Stress/Severe Distress";
+            if (score < 15) return "Low Self-Esteem";
+            if (score <= 25) return "Normal Self-Esteem";
+            return "High Self-Esteem";
         }
     }
 }

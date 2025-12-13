@@ -12,7 +12,7 @@ namespace Mental_Health_Wellness_Tracker.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
-        // The type of assessment (e.g., "PSS", "Rosenberg")
+        // The type of assessment (currently "Rosenberg")
         public string TestType { get; set; }
 
         // The question text
@@ -21,7 +21,7 @@ namespace Mental_Health_Wellness_Tracker.Models
         // Whether to reverse the scoring (key logic!)
         public bool IsReversed { get; set; }
 
-        // The maximum possible score for this question is (PSS=4, Rosenberg=3).
+        // The maximum possible score for this question (Rosenberg uses 0-3)
         public int MaxScore { get; set; }
 
         // Order of the question in the assessment

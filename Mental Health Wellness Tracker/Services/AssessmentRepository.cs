@@ -56,6 +56,9 @@ namespace Mental_Health_Wellness_Tracker.Services
             // Create LocalDiaryEntry table for local diary storage
             await _database.CreateTableAsync<LocalDiaryEntry>();
 
+            // Remove deprecated assessments so only Rosenberg remains
+            await _database.ExecuteAsync("DELETE FROM AssessmentQuestion WHERE TestType = ?", "PSS");
+
             // Data Seeding: If the question bank is empty, we automatically fill it with default questions.
             if (await _database.Table<AssessmentQuestion>().CountAsync() == 0)
             {
@@ -233,11 +236,15 @@ namespace Mental_Health_Wellness_Tracker.Services
         public async Task<string> ChooseRandomTestTypeAsync()
         {
             var available = await GetAvailableTestTypesAsync();
-            var pool = available?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList() ?? new List<string>();
+            var pool = available?
+                .Where(x => !string.IsNullOrWhiteSpace(x) && !string.Equals(x, "PSS", StringComparison.OrdinalIgnoreCase))
+                .Distinct()
+                .ToList()
+                ?? new List<string>();
 
             if (pool.Count == 0)
             {
-                return "PSS";
+                return "Rosenberg";
             }
 
             var random = new Random();
@@ -688,6 +695,27 @@ namespace Mental_Health_Wellness_Tracker.Services
                 profile.LastUpdated = DateTime.UtcNow;
                 profile.IsSynced = false;
 
+                // Upload local-only profile avatars to cloud storage so they can be shared
+                if (!string.IsNullOrWhiteSpace(profile.ProfileImagePath)
+                    && !profile.ProfileImagePath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                    && File.Exists(profile.ProfileImagePath)
+                    && Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+                {
+                    var token = await SecureStorage.GetAsync("auth_token");
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        using var stream = File.OpenRead(profile.ProfileImagePath);
+                        var storageService = new FirebaseStorageService();
+                        var fileName = $"{profile.UserId ?? Guid.NewGuid().ToString()}_{Path.GetFileName(profile.ProfileImagePath)}";
+                        var uploadedUrl = await storageService.UploadImageAsync(stream, fileName, token, "profile_images");
+
+                        if (!string.IsNullOrEmpty(uploadedUrl))
+                        {
+                            profile.ProfileImagePath = uploadedUrl;
+                        }
+                    }
+                }
+
                 // Check if the user already has a profile.
                 var existingProfile = await _database.Table<UserProfile>()
                                                      .Where(p => p.UserId == profile.UserId)
@@ -875,18 +903,6 @@ namespace Mental_Health_Wellness_Tracker.Services
             questions.Add(new AssessmentQuestion { TestType = "Rosenberg", OrderIndex = 8, QuestionText = "I wish I could have more respect for myself.", IsReversed = true, MaxScore = 3 });
             questions.Add(new AssessmentQuestion { TestType = "Rosenberg", OrderIndex = 9, QuestionText = "I certainly feel useless at times.", IsReversed = true, MaxScore = 3 });
             questions.Add(new AssessmentQuestion { TestType = "Rosenberg", OrderIndex = 10, QuestionText = "At times I think I am no good at all.", IsReversed = true, MaxScore = 3 });
-
-            // Perceived Stress Scale Questions
-            // Note: Questions 4, 5, 7, and 8 are usually scored in reverse.
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 1, QuestionText = "In the last month, how often have you been upset because of something that happened unexpectedly?", IsReversed = false, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 2, QuestionText = "In the last month, how often have you felt that you were unable to control the important things in your life?", IsReversed = false, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 4, QuestionText = "In the last month, how often have you felt confident about your ability to handle your personal problems?", IsReversed = true, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 5, QuestionText = "In the last month, how often have you felt that things were going your way?", IsReversed = true, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 6, QuestionText = "In the last month, how often have you found that you could not cope with all the things that you had to do?", IsReversed = false, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 7, QuestionText = "In the last month, how often have you been able to control irritations in your life?", IsReversed = true, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 8, QuestionText = "In the last month, how often have you felt that you were on top of things?", IsReversed = true, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 9, QuestionText = "In the last month, how often have you been angered because of things that were outside of your control?", IsReversed = false, MaxScore = 4 });
-            questions.Add(new AssessmentQuestion { TestType = "PSS", OrderIndex = 10, QuestionText = "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?", IsReversed = false, MaxScore = 4 });
 
             // Batch insert into database
             await _database.InsertAllAsync(questions);

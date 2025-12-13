@@ -9,7 +9,7 @@ namespace Mental_Health_Wellness_Tracker.Services
 {
     public interface IAssessmentRepository
     {
-        // Retrieve all questions for a specific test (e.g., all questions for "PSS").
+        // Retrieve all questions for a specific test (e.g., all questions for "Rosenberg").
         Task<List<AssessmentQuestion>> GetQuestionsByTestTypeAsync(string testType);
 
         // Save user evaluation results

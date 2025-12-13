@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Networking;
 using Microsoft.Maui.Storage;
 using Mental_Health_Wellness_Tracker.Views;
 using Mental_Health_Wellness_Tracker.Models;
@@ -81,9 +82,20 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 OnPropertyChanged(nameof(Bio));
 
                 // Load and set avatar source
-                if (!string.IsNullOrEmpty(_userProfile.ProfileImagePath) && File.Exists(_userProfile.ProfileImagePath))
+                if (!string.IsNullOrEmpty(_userProfile.ProfileImagePath))
                 {
-                    ProfileAvatarSource = ImageSource.FromFile(_userProfile.ProfileImagePath);
+                    if (Uri.TryCreate(_userProfile.ProfileImagePath, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                    {
+                        ProfileAvatarSource = ImageSource.FromUri(uri);
+                    }
+                    else if (File.Exists(_userProfile.ProfileImagePath))
+                    {
+                        ProfileAvatarSource = ImageSource.FromFile(_userProfile.ProfileImagePath);
+                    }
+                    else
+                    {
+                        ProfileAvatarSource = "nav_profile.png";
+                    }
                 }
                 else
                 {
@@ -136,19 +148,38 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 if (result != null)
                 {
-                    string permanentPath = Path.Combine(FileSystem.AppDataDirectory, "user_profile_pic.png");
+                    var userId = await SecureStorage.GetAsync("user_id");
+                    var token = await SecureStorage.GetAsync("auth_token");
 
-                    // Copy file to permanent storage location
-                    using (var sourceStream = await result.OpenReadAsync())
-                    using (var localFileStream = File.Create(permanentPath))
+                    if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
                     {
-                        await sourceStream.CopyToAsync(localFileStream);
+                        await Application.Current.MainPage.DisplayAlert("Login required", "Please sign in before updating your profile picture.", "OK");
+                        return;
                     }
 
-                    // Update model and UI
-                    _userProfile.ProfileImagePath = permanentPath;
-                    ProfileAvatarSource = ImageSource.FromFile(permanentPath);
+                    if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Offline", "Connect to the internet to upload your profile picture.", "OK");
+                        return;
+                    }
+
+                    using var sourceStream = await result.OpenReadAsync();
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(result.FileName)}";
+                    var storageService = new FirebaseStorageService();
+                    var downloadUrl = await storageService.UploadImageAsync(sourceStream, fileName, token, "profile_images");
+
+                    if (string.IsNullOrEmpty(downloadUrl))
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Upload failed", "Could not upload the image. Please try again.", "OK");
+                        return;
+                    }
+
+                    _userProfile.UserId = userId;
+                    _userProfile.ProfileImagePath = downloadUrl;
+                    ProfileAvatarSource = ImageSource.FromUri(new Uri(downloadUrl));
                     OnPropertyChanged(nameof(ProfileAvatarSource));
+
+                    await _repository.SaveUserProfileAsync(_userProfile);
                 }
             }
             catch (Exception ex)

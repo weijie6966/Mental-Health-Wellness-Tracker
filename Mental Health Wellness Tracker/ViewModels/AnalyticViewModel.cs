@@ -101,7 +101,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 // Cap bar height to keep the chart labels visible
                 const double heightPerItem = 24.0;
-                const double maxHeight = 120.0;
+                const double maxHeight = 90.0;
 
                 BarLowHeight = Math.Min(low * heightPerItem, maxHeight);
                 BarNormalHeight = Math.Min(normal * heightPerItem, maxHeight);

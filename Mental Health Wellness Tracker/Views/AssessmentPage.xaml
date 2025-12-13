@@ -55,28 +55,28 @@
                                VerticalOptions="CenterAndExpand"/>
 
                         <StackLayout Spacing="10">
-                            <Button Text="Not at all (0)"
+                            <Button Text="Strongly disagree (0)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 0}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=0}"
                                     TextColor="White"
                                     FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
-                            <Button Text="Several days (1)"
+                            <Button Text="Disagree (1)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 1}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=1}"
                                     TextColor="White"
                                     FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
-                            <Button Text="More than half the days (2)"
+                            <Button Text="Agree (2)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 2}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=2}"
                                     TextColor="White"
                                     FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
-                            <Button Text="Nearly every day (3)"
+                            <Button Text="Strongly agree (3)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 3}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=3}"

@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using System;
 
 namespace Mental_Health_Wellness_Tracker
 {
@@ -9,9 +10,13 @@ namespace Mental_Health_Wellness_Tracker
             InitializeComponent();
 
             // Set the image source based on the passed path
-            if (imagePath == "nav_profile.png")
+            if (string.IsNullOrWhiteSpace(imagePath) || imagePath == "nav_profile.png")
             {
                 FullProfileImage.Source = "nav_profile.png";
+            }
+            else if (Uri.TryCreate(imagePath, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                FullProfileImage.Source = ImageSource.FromUri(uri);
             }
             else
             {

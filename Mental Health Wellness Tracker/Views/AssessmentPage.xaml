@@ -6,38 +6,44 @@
              x:Class="Mental_Health_Wellness_Tracker.Views.AssessmentPage"
              Title="Mental Health Assessment"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#0E4D5A">
+             BackgroundImageSource="background.png">
 
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <Color x:Key="PrimaryBlue">#008080</Color>
-            <Color x:Key="HighlightTeal">#00CED1</Color>
-            <Color x:Key="AccentGold">#FFD700</Color>
+            <Color x:Key="TextCyan">#00E5FF</Color>
+            <Color x:Key="ActiveNavColor">#689FBD</Color>
+            <Color x:Key="CommentBGColor">#181E3F</Color>
+            <LinearGradientBrush x:Key="CardGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#9F55FF" Offset="0.0" />
+                <GradientStop Color="#00E5FF" Offset="1.0" />
+            </LinearGradientBrush>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="*, Auto" Padding="0">
+    <Grid x:Name="AssessmentContent" RowDefinitions="*, Auto" Padding="0">
+
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Grid.RowSpan="2"/>
 
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Spacing="25" Padding="30,40,30,30" HorizontalOptions="FillAndExpand">
 
-                <Label Text="Your Assessment"
-                       FontFamily="OpenSansSemibold" 
-                       FontSize="26"
-                       TextColor="#F0F0F0" 
+                <Label Text="ASSESSMENT"
+                       FontFamily="BrushFont"
+                       FontSize="35"
+                       TextColor="{StaticResource TextCyan}"
                        HorizontalOptions="Center"
                        Margin="0,0,0,10"/>
 
                 <Label Text="{Binding QuestionCounterDisplay}"
-                       TextColor="{StaticResource HighlightTeal}"
+                       TextColor="{StaticResource TextCyan}"
                        FontSize="16"
+                       FontFamily="ComfortaaRegular"
                        HorizontalOptions="Center"/>
 
-                <Border StrokeShape="RoundRectangle 12" 
-                        BackgroundColor="#20FFFFFF" 
-                        StrokeThickness="1" 
-                        Stroke="{StaticResource PrimaryBlue}" 
+                <Border StrokeShape="RoundRectangle 12"
+                        Background="{StaticResource CardGradient}"
+                        StrokeThickness="0"
                         Padding="25"
                         Margin="0, 20, 0, 20">
                     <VerticalStackLayout Spacing="20">
@@ -45,7 +51,7 @@
                         <Label Text="{Binding CurrentQuestion.QuestionText}"
                                TextColor="White"
                                FontSize="18"
-                               FontFamily="OpenSansRegular"
+                               FontFamily="ComfortaaRegular"
                                VerticalOptions="CenterAndExpand"/>
 
                         <StackLayout Spacing="10">
@@ -53,25 +59,29 @@
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 0}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=0}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                             <Button Text="Several days (1)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 1}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=1}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                             <Button Text="More than half the days (2)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 2}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=2}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                             <Button Text="Nearly every day (3)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 3}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=3}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                         </StackLayout>
                     </VerticalStackLayout>
@@ -79,40 +89,42 @@
 
                 <Grid ColumnDefinitions="*, *" ColumnSpacing="15">
 
-                    <Button Text="PREVIOUS" 
+                    <Button Text="PREVIOUS"
                             Grid.Column="0"
                             Command="{Binding PreviousCommand}"
                             IsVisible="{Binding IsNotFirstQuestion}"
-                            BackgroundColor="{StaticResource PrimaryBlue}" 
-                            TextColor="White" 
-                            CornerRadius="10" 
+                            BackgroundColor="{StaticResource ActiveNavColor}"
+                            TextColor="White"
+                            FontFamily="ComfortaaRegular"
+                            CornerRadius="10"
                             HeightRequest="50"/>
 
-                    <Button Text="NEXT" 
+                    <Button Text="NEXT"
                             Grid.Column="1"
                             Command="{Binding NextCommand}"
                             IsVisible="{Binding IsNotLastQuestion}"
-                            BackgroundColor="{StaticResource PrimaryBlue}" 
-                            TextColor="White" 
-                            CornerRadius="10" 
+                            BackgroundColor="{StaticResource ActiveNavColor}"
+                            TextColor="White"
+                            FontFamily="ComfortaaRegular"
+                            CornerRadius="10"
                             HeightRequest="50"/>
 
-                    <Button Text="SUBMIT ASSESSMENT" 
+                    <Button Text="SUBMIT ASSESSMENT"
                             Grid.ColumnSpan="2"
                             Command="{Binding SubmitCommand}"
                             IsVisible="{Binding IsSubmitVisible}"
-                            BackgroundColor="{StaticResource AccentGold}" 
-                            TextColor="#0E4D5A" 
-                            CornerRadius="10" 
+                            BackgroundColor="{StaticResource TextCyan}"
+                            TextColor="{StaticResource CommentBGColor}"
+                            CornerRadius="10"
                             HeightRequest="50"
-                            FontFamily="OpenSansSemibold"/>
+                            FontFamily="ComfortaaRegular"/>
                 </Grid>
             </VerticalStackLayout>
         </ScrollView>
 
         <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
             <Grid ColumnDefinitions="*,*,*,*,*">
-                <Button Grid.Column="0" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="#689FBD" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="0" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 <Button Grid.Column="1" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 <Button Grid.Column="2" ImageSource="nav_diary.png" Command="{Binding NavigateCommand}" CommandParameter="Diary" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 <Button Grid.Column="3" ImageSource="nav_graph.png" Command="{Binding NavigateCommand}" CommandParameter="Stats" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>

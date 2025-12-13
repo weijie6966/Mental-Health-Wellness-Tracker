@@ -24,7 +24,7 @@ namespace Mental_Health_Wellness_Tracker.Models
         // User ID to link the result to a specific user
         public string UserId { get; set; }
 
-        // Test type (e.g., "PSS" or "Rosenberg")
+        // Test type (e.g., "Rosenberg")
         public string TestType { get; set; }
 
         // Date when the assessment was taken

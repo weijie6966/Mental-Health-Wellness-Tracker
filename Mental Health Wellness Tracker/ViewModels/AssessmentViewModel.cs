@@ -17,7 +17,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
     {
         private readonly IAssessmentRepository _assessmentRepository = new AssessmentRepository();
 
-        private string _activeTestType = "PSS";
+        private const string ActiveTestType = "Rosenberg";
 
         // FIX: ObservableCollection now holds the base AssessmentQuestion model
         public ObservableCollection<AssessmentQuestion> Questions { get; set; } = new ObservableCollection<AssessmentQuestion>();
@@ -56,9 +56,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             Questions.Clear();
 
-            _activeTestType = await _assessmentRepository.ChooseRandomTestTypeAsync();
-
-            var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(_activeTestType);
+            var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(ActiveTestType);
 
             if (fetched != null && fetched.Count > 0)
             {
@@ -163,7 +161,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                     UserId = userId,
                     UserEmail = userEmail,
                     Username = username,
-                    TestType = _activeTestType,
+                    TestType = ActiveTestType,
                     TotalScore = totalScore, // Correct property
                     DateTaken = DateTime.UtcNow, // Correct property
                     CalculatedResult = GetCalculatedResult(totalScore), // Correct property
@@ -172,8 +170,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                 await _assessmentRepository.SaveAssessmentResultAsync(result);
 
-                // Navigate back to the Profile page after completing the assessment
-                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new ProfilePage());
+                // Navigate to the analytics summary after completing the assessment
+                await Microsoft.Maui.Controls.Application.Current.MainPage.Navigation.PushAsync(new AnalyticPage());
             }
             catch (Exception ex)
             {
@@ -184,11 +182,9 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // FIX: Method name changed to match the property name
         private string GetCalculatedResult(int score)
         {
-            if (score <= 4) return "Minimal Depression";
-            if (score <= 9) return "Mild Depression";
-            if (score <= 14) return "Moderate Depression";
-            if (score <= 19) return "Moderately Severe Depression";
-            return "Severe Depression";
+            if (score < 15) return "Low Self-Esteem";
+            if (score <= 25) return "Normal Self-Esteem";
+            return "High Self-Esteem";
         }
 
         private int CalculateScore(AssessmentQuestion question)
@@ -199,12 +195,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             var max = question.MaxScore <= 0 ? 3 : question.MaxScore;
             chosen = Math.Clamp(chosen, 0, max);
 
-            if (question.IsReversed)
-            {
-                return Math.Max(0, max - chosen);
-            }
-
-            return chosen;
+            return question.IsReversed ? Math.Max(0, max - chosen) : chosen;
         }
 
         private async Task OnNavTapped(string destination)

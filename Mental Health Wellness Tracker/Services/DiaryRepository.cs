@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 using Google.Cloud.Firestore;
 using Mental_Health_Wellness_Tracker.Models;
 using SQLite;
+using Microsoft.Maui.Storage;
+using Microsoft.Maui.Networking;
 
 namespace Mental_Health_Wellness_Tracker.Services
 {

@@ -22,8 +22,8 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid>
-        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
+    <Grid x:Name="CommunityContent">
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill" Grid.RowSpan="3"/>
 
         <Grid RowDefinitions="Auto, *, 80">
 
@@ -33,7 +33,7 @@
                 <CollectionView.EmptyView>
                     <Grid>
                         <Label Text="No feed posted yet!"
-                               FontFamily="BrushFont" FontSize="30" TextColor="{StaticResource TextCyan}" Opacity="0.8" VerticalOptions="Center" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                               FontFamily="ComfortaaRegular" FontSize="20" TextColor="{StaticResource TextCyan}" Opacity="0.8" VerticalOptions="Center" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
                     </Grid>
                 </CollectionView.EmptyView>
 
@@ -57,8 +57,8 @@
 
                                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="10,0,0,0" Spacing="0">
 
-                                            <Label Text="{Binding Username}" TextColor="Black" FontAttributes="Bold" FontSize="14"/>
-                                            <Label Text="{Binding TimeDisplay}" TextColor="#333333" FontSize="10" FontAttributes="Italic"/>
+                                            <Label Text="{Binding Username}" TextColor="Black" FontAttributes="Bold" FontSize="14" FontFamily="ComfortaaRegular"/>
+                                            <Label Text="{Binding TimeDisplay}" TextColor="#333333" FontSize="10" FontAttributes="Italic" FontFamily="ComfortaaRegular"/>
 
                                         </VerticalStackLayout>
 
@@ -66,14 +66,14 @@
 
 
                                         <HorizontalStackLayout Grid.Column="3" Spacing="0" VerticalOptions="Center" IsVisible="{Binding IsOwner}">
-                                            <Button Text="Edit" TextColor="Black" FontSize="12" FontAttributes="Bold" BackgroundColor="Transparent" Padding="5,0" HeightRequest="30" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=EditCommand}" CommandParameter="{Binding .}"/>
+                                            <Button Text="Edit" TextColor="Black" FontSize="12" FontAttributes="Bold" BackgroundColor="Transparent" Padding="5,0" HeightRequest="30" FontFamily="ComfortaaRegular" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=EditCommand}" CommandParameter="{Binding .}"/>
 
-                                            <Button Text="Delete" TextColor="Red" FontSize="12" FontAttributes="Bold" BackgroundColor="Transparent" Padding="5,0" HeightRequest="30" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=DeleteCommand}" CommandParameter="{Binding .}"/>
+                                            <Button Text="Delete" TextColor="Red" FontSize="12" FontAttributes="Bold" BackgroundColor="Transparent" Padding="5,0" HeightRequest="30" FontFamily="ComfortaaRegular" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CommunityViewModel}}, Path=DeleteCommand}" CommandParameter="{Binding .}"/>
                                         </HorizontalStackLayout>
                                     </Grid>
 
 
-                                    <Label Text="{Binding Content}" TextColor="Black" FontSize="14" Margin="0, 5, 0, 10" VerticalOptions="StartAndExpand" LineBreakMode="WordWrap"/>
+                                    <Label Text="{Binding Content}" TextColor="Black" FontSize="14" Margin="0, 5, 0, 10" VerticalOptions="StartAndExpand" LineBreakMode="WordWrap" FontFamily="ComfortaaRegular"/>
 
                                     <CarouselView ItemsSource="{Binding PostImages}"
                     

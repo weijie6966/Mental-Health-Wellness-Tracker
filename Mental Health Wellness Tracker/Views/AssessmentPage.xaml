@@ -6,7 +6,7 @@
              x:Class="Mental_Health_Wellness_Tracker.Views.AssessmentPage"
              Title="Mental Health Assessment"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#0E4D5A">
+             BackgroundImageSource="background.png">
 
 
     <ContentPage.Resources>
@@ -17,7 +17,9 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="*, Auto" Padding="0">
+    <Grid x:Name="AssessmentContent" RowDefinitions="*, Auto" Padding="0">
+
+        <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Grid.RowSpan="2"/>
 
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Spacing="25" Padding="30,40,30,30" HorizontalOptions="FillAndExpand">
@@ -32,20 +34,21 @@
                 <Label Text="{Binding QuestionCounterDisplay}"
                        TextColor="{StaticResource HighlightTeal}"
                        FontSize="16"
+                       FontFamily="ComfortaaRegular"
                        HorizontalOptions="Center"/>
 
-                <Border StrokeShape="RoundRectangle 12" 
-                        BackgroundColor="#20FFFFFF" 
-                        StrokeThickness="1" 
-                        Stroke="{StaticResource PrimaryBlue}" 
+                <Border StrokeShape="RoundRectangle 12"
+                        BackgroundColor="Snow"
+                        StrokeThickness="1"
+                        Stroke="{StaticResource PrimaryBlue}"
                         Padding="25"
                         Margin="0, 20, 0, 20">
                     <VerticalStackLayout Spacing="20">
 
                         <Label Text="{Binding CurrentQuestion.QuestionText}"
-                               TextColor="White"
+                               TextColor="#0E4D5A"
                                FontSize="18"
-                               FontFamily="OpenSansRegular"
+                               FontFamily="ComfortaaRegular"
                                VerticalOptions="CenterAndExpand"/>
 
                         <StackLayout Spacing="10">
@@ -53,25 +56,29 @@
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 0}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=0}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                             <Button Text="Several days (1)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 1}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=1}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                             <Button Text="More than half the days (2)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 2}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=2}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                             <Button Text="Nearly every day (3)"
                                     Command="{Binding SelectOptionCommand}"
                                     CommandParameter="{x:Int32 3}"
                                     BackgroundColor="{Binding CurrentQuestion.SelectedScore, Converter={StaticResource SelectedScoreToColorConverter}, ConverterParameter=3}"
-                                    TextColor="White" 
+                                    TextColor="White"
+                                    FontFamily="ComfortaaRegular"
                                     CornerRadius="8"/>
                         </StackLayout>
                     </VerticalStackLayout>
@@ -85,7 +92,8 @@
                             IsVisible="{Binding IsNotFirstQuestion}"
                             BackgroundColor="{StaticResource PrimaryBlue}" 
                             TextColor="White" 
-                            CornerRadius="10" 
+                            FontFamily="ComfortaaRegular"
+                            CornerRadius="10"
                             HeightRequest="50"/>
 
                     <Button Text="NEXT" 
@@ -94,7 +102,8 @@
                             IsVisible="{Binding IsNotLastQuestion}"
                             BackgroundColor="{StaticResource PrimaryBlue}" 
                             TextColor="White" 
-                            CornerRadius="10" 
+                            FontFamily="ComfortaaRegular"
+                            CornerRadius="10"
                             HeightRequest="50"/>
 
                     <Button Text="SUBMIT ASSESSMENT" 
@@ -105,7 +114,7 @@
                             TextColor="#0E4D5A" 
                             CornerRadius="10" 
                             HeightRequest="50"
-                            FontFamily="OpenSansSemibold"/>
+                            FontFamily="ComfortaaRegular"/>
                 </Grid>
             </VerticalStackLayout>
         </ScrollView>

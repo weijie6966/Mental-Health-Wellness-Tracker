@@ -25,6 +25,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (newEntry != null)
             {
+                newEntry.IsOwner = IsPostMine(newEntry);
                 // Add the new post to the bindable collection at the top
                 Posts.Insert(0, newEntry);
             }
@@ -93,6 +94,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                             MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji,
                             UserProfileImage = string.IsNullOrWhiteSpace(diary.ProfileImagePath) ? "nav_profile.png" : diary.ProfileImagePath
                         };
+
+                        post.IsOwner = IsPostMine(post);
 
                     if (!string.IsNullOrWhiteSpace(diary.ImgUrl))
                     {

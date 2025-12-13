@@ -103,10 +103,12 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 CountNormal = normal.ToString();
                 CountHigh = high.ToString();
 
-                double m = 6.0;
-                BarLowHeight = low * m;
-                BarNormalHeight = normal * m * 150; // *150 added for visual scaling consistency
-                BarHighHeight = high * m * 150;     // *150 added for visual scaling consistency
+                const double heightPerItem = 28.0;
+                const double maxHeight = 180.0;
+
+                BarLowHeight = Math.Min(low * heightPerItem, maxHeight);
+                BarNormalHeight = Math.Min(normal * heightPerItem, maxHeight);
+                BarHighHeight = Math.Min(high * heightPerItem, maxHeight);
             }
 
             NotifyStatisticProperties();

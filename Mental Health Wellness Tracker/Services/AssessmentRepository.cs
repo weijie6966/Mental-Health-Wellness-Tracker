@@ -7,6 +7,7 @@ using SQLite;
 using Mental_Health_Wellness_Tracker.Models;
 using System.IO;
 using Microsoft.Maui.Storage;
+using Microsoft.Maui.Networking;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;

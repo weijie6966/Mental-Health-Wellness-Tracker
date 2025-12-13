@@ -23,6 +23,19 @@ namespace Mental_Health_Wellness_Tracker.Models
         public string Content { get; set; } = string.Empty;
         public string MoodEmoji { get; set; } = "emoji_neutral.png";
         public string UserProfileImage { get; set; } = "nav_profile.png";
+        private bool _isOwner;
+        public bool IsOwner
+        {
+            get => _isOwner;
+            set
+            {
+                if (_isOwner != value)
+                {
+                    _isOwner = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public ObservableCollection<string> PostImages { get; set; } = new ObservableCollection<string>();
 

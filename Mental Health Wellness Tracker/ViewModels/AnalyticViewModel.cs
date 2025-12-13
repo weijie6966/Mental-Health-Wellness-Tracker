@@ -84,73 +84,35 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             else if (score <= 25) Recommendation = "You are in the normal range—keep reinforcing healthy self-talk.";
             else Recommendation = "High self-esteem detected. Maintain balance with mindful reflection.";
 
-            var scores = await ScoreAnswersAsync(latestResult);
+            var (low, normal, high) = CalculateHistoryFrequency(History);
 
-            // Reset state if no scores are present
-            if (scores == null || scores.Count == 0)
-            {
-                ResetBarData();
-            }
-            else
-            {
-                var (low, normal, high) = CalculateSymptomFrequency(scores);
+            CountLow = low.ToString();
+            CountNormal = normal.ToString();
+            CountHigh = high.ToString();
 
-                CountLow = low.ToString();
-                CountNormal = normal.ToString();
-                CountHigh = high.ToString();
+            // Cap bar height to keep the chart labels visible
+            const double heightPerItem = 24.0;
+            const double maxHeight = 90.0;
 
-                // Cap bar height to keep the chart labels visible
-                const double heightPerItem = 24.0;
-                const double maxHeight = 90.0;
-
-                BarLowHeight = Math.Min(low * heightPerItem, maxHeight);
-                BarNormalHeight = Math.Min(normal * heightPerItem, maxHeight);
-                BarHighHeight = Math.Min(high * heightPerItem, maxHeight);
-            }
+            BarLowHeight = Math.Min(low * heightPerItem, maxHeight);
+            BarNormalHeight = Math.Min(normal * heightPerItem, maxHeight);
+            BarHighHeight = Math.Min(high * heightPerItem, maxHeight);
 
             NotifyStatisticProperties();
         }
 
-        private async Task<List<int>> ScoreAnswersAsync(AssessmentResult result)
-        {
-            if (result?.AnswerData == null || result.AnswerData.Count == 0)
-            {
-                return new List<int>();
-            }
-
-            var questions = await _repository.GetQuestionsByTestTypeAsync(result.TestType) ?? new List<AssessmentQuestion>();
-            var orderedQuestions = questions.OrderBy(q => q.OrderIndex).ToList();
-
-            var scored = new List<int>();
-            var count = Math.Min(result.AnswerData.Count, orderedQuestions.Count);
-
-            const int rosenbergMax = 3;
-
-            for (int i = 0; i < count; i++)
-            {
-                var question = orderedQuestions[i];
-                var rawSelection = result.AnswerData[i];
-                var normalized = Math.Clamp(rawSelection, 0, rosenbergMax);
-
-                var scoredValue = question.IsReversed
-                    ? Math.Max(0, rosenbergMax - normalized)
-                    : normalized;
-
-                scored.Add(scoredValue);
-            }
-
-            return scored;
-        }
-
-        private (int low, int normal, int high) CalculateSymptomFrequency(List<int> scores)
+        private (int low, int normal, int high) CalculateHistoryFrequency(IEnumerable<AssessmentResult> results)
         {
             int low = 0, normal = 0, high = 0;
 
-            foreach (var score in scores)
+            if (results != null)
             {
-                if (score == 0) low++;
-                else if (score == 1) normal++;
-                else high++;
+                foreach (var result in results)
+                {
+                    if (result.TotalScore < 15) low++;
+                    else if (result.TotalScore <= 25) normal++;
+                    else high++;
+                }
             }
 
             return (low, normal, high);

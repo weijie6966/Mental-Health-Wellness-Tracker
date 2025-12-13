@@ -49,7 +49,7 @@
                     <VerticalStackLayout Spacing="20">
 
                         <Label Text="{Binding CurrentQuestion.QuestionText}"
-                               TextColor="White"
+                               TextColor="#0E4D5A"
                                FontSize="18"
                                FontFamily="ComfortaaRegular"
                                VerticalOptions="CenterAndExpand"/>

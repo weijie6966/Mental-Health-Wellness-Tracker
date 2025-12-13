@@ -6,8 +6,8 @@ namespace Mental_Health_Wellness_Tracker.Resources.Converters
 {
     public class SelectedScoreToColorConverter : IValueConverter
     {
-        private Color SelectedColor { get; } = Color.FromHex("#00CED1"); // HighlightTeal
-        private Color DefaultColor { get; } = Color.FromHex("#008080"); // PrimaryBlue
+        private Color SelectedColor { get; } = Color.FromHex("#00E5FF"); // TextCyan
+        private Color DefaultColor { get; } = Color.FromHex("#689FBD"); // ActiveNavColor
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

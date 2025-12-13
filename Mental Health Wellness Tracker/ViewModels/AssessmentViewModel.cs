@@ -191,11 +191,13 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (question == null || !question.SelectedScore.HasValue) return 0;
 
-            var chosen = question.SelectedScore.Value;
-            var max = question.MaxScore <= 0 ? 3 : question.MaxScore;
-            chosen = Math.Clamp(chosen, 0, max);
+            const int rosenbergMax = 3;
 
-            return question.IsReversed ? Math.Max(0, max - chosen) : chosen;
+            var chosen = Math.Clamp(question.SelectedScore.Value, 0, rosenbergMax);
+
+            return question.IsReversed
+                ? Math.Max(0, rosenbergMax - chosen)
+                : chosen;
         }
 
         private async Task OnNavTapped(string destination)

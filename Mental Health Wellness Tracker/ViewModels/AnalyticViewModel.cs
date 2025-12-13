@@ -99,8 +99,9 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                 CountNormal = normal.ToString();
                 CountHigh = high.ToString();
 
-                const double heightPerItem = 28.0;
-                const double maxHeight = 180.0;
+                // Cap bar height to keep the chart labels visible
+                const double heightPerItem = 24.0;
+                const double maxHeight = 120.0;
 
                 BarLowHeight = Math.Min(low * heightPerItem, maxHeight);
                 BarNormalHeight = Math.Min(normal * heightPerItem, maxHeight);
@@ -123,14 +124,17 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             var scored = new List<int>();
             var count = Math.Min(result.AnswerData.Count, orderedQuestions.Count);
 
+            const int rosenbergMax = 3;
+
             for (int i = 0; i < count; i++)
             {
                 var question = orderedQuestions[i];
                 var rawSelection = result.AnswerData[i];
-                var questionMax = question.MaxScore <= 0 ? 3 : question.MaxScore;
-                var normalized = Math.Clamp(rawSelection, 0, questionMax);
+                var normalized = Math.Clamp(rawSelection, 0, rosenbergMax);
 
-                var scoredValue = question.IsReversed ? Math.Max(0, questionMax - normalized) : normalized;
+                var scoredValue = question.IsReversed
+                    ? Math.Max(0, rosenbergMax - normalized)
+                    : normalized;
 
                 scored.Add(scoredValue);
             }

@@ -13,7 +13,7 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid>
+    <Grid x:Name="AnalyticContent">
         <Image Source="background.png" Aspect="AspectFill" HorizontalOptions="Fill" VerticalOptions="Fill"/>
 
         <Grid RowDefinitions="*, 80">
@@ -27,50 +27,54 @@
                         <Border Grid.Row="0" Grid.Column="0" BackgroundColor="RoyalBlue" StrokeShape="RoundRectangle 20" StrokeThickness="0">
                             <VerticalStackLayout VerticalOptions="Center">
 
-                                <Label Text="SCORE" TextColor="White" HorizontalOptions="Center" FontSize="12"/>
-                                <Label Text="{Binding ScoreDisplay}" TextColor="White" FontAttributes="Bold" FontSize="40" HorizontalOptions="Center"/>
+                                <Label Text="SCORE" TextColor="White" HorizontalOptions="Center" FontSize="12" FontFamily="ComfortaaRegular"/>
+                                <Label Text="{Binding ScoreDisplay}" TextColor="White" FontAttributes="Bold" FontSize="40" HorizontalOptions="Center" FontFamily="ComfortaaRegular"/>
                             </VerticalStackLayout>
 
                         </Border>
 
                         <Border Grid.Row="0" Grid.Column="1" BackgroundColor="Aqua" StrokeShape="RoundRectangle 20" StrokeThickness="0">
                             <VerticalStackLayout VerticalOptions="Center" Padding="5">
-                                <Label Text="STATUS" TextColor="Black" HorizontalOptions="Center" FontSize="12"/>
-                                <Label Text="{Binding StatusDisplay}" TextColor="Black" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                                <Label Text="STATUS" TextColor="Black" HorizontalOptions="Center" FontSize="12" FontFamily="ComfortaaRegular"/>
+                                <Label Text="{Binding StatusDisplay}" TextColor="Black" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" HorizontalTextAlignment="Center" FontFamily="ComfortaaRegular"/>
                             </VerticalStackLayout>
                         </Border>
 
                         <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="Navy" StrokeShape="RoundRectangle 20" StrokeThickness="0" Padding="20">
                             <VerticalStackLayout Spacing="10">
-                                <Label Text="RECOMMENDATION" TextColor="Cyan" FontAttributes="Bold"/>
-                                <Label Text="{Binding Recommendation}" TextColor="White" FontSize="12"/>
+                                <Label Text="RECOMMENDATION" TextColor="Cyan" FontAttributes="Bold" FontFamily="ComfortaaRegular"/>
+                                <Label Text="{Binding Recommendation}" TextColor="White" FontSize="12" FontFamily="ComfortaaRegular"/>
                             </VerticalStackLayout>
                         </Border>
 
-                        <Border Grid.Row="2" Grid.Column="0" 
+                        <Border Grid.Row="2" Grid.Column="0"
                                 Grid.ColumnSpan="2" BackgroundColor="#10FFFFFF" StrokeShape="RoundRectangle 20" StrokeThickness="1" Stroke="Gray" Padding="20">
                             <VerticalStackLayout>
-                                <Label Text="Symptom Frequency" TextColor="White" FontAttributes="Bold" Margin="0,0,0,15"/>
+                                <Label Text="Symptom Frequency" TextColor="White" FontAttributes="Bold" Margin="0,0,0,15" FontFamily="ComfortaaRegular"/>
 
-                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="*, Auto, Auto" HeightRequest="150" ColumnSpacing="15" VerticalOptions="End">
-                                    <BoxView Grid.Column="0" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="{Binding BarLowHeight}" CornerRadius="5"/>
-                                    <Label Text="Low" Grid.Column="0" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0"/>
-                                    <Label Grid.Column="0" Grid.Row="2" Text="{Binding CountLow}" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="150, Auto, Auto" ColumnSpacing="15" VerticalOptions="End">
+                                    <Grid Grid.Row="0" Grid.ColumnSpan="3" RowDefinitions="*,Auto" ColumnDefinitions="*,*,*">
+                                        <Rectangle Grid.Column="0" Grid.Row="0" Fill="#2ECC71" HeightRequest="{Binding BarLowHeight}" VerticalOptions="End" RadiusX="6" RadiusY="6"/>
+                                        <Rectangle Grid.Column="1" Grid.Row="0" Fill="#9B59B6" HeightRequest="{Binding BarNormalHeight}" VerticalOptions="End" RadiusX="6" RadiusY="6"/>
+                                        <Rectangle Grid.Column="2" Grid.Row="0" Fill="#F1C40F" HeightRequest="{Binding BarHighHeight}" VerticalOptions="End" RadiusX="6" RadiusY="6"/>
+                                        <BoxView Grid.ColumnSpan="3" Grid.Row="1" Color="#40FFFFFF" HeightRequest="1" VerticalOptions="End" Margin="0,4,0,0"/>
+                                    </Grid>
 
-                                    <BoxView Grid.Column="1" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="{Binding BarNormalHeight}" CornerRadius="5"/>
-                                    <Label Text="Normal" Grid.Column="1" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0"/>
-                                    <Label Grid.Column="1" Grid.Row="2" Text="{Binding CountNormal}" TextColor="Gray" HorizontalOptions="Center" FontSize="10"/>
+                                    <Label Text="Low" Grid.Column="0" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0" FontFamily="ComfortaaRegular"/>
+                                    <Label Grid.Column="0" Grid.Row="2" Text="{Binding CountLow}" TextColor="Gray" HorizontalOptions="Center" FontSize="10" FontFamily="ComfortaaRegular"/>
 
-                                    <BoxView Grid.Column="2" Grid.Row="0" Color="#2ECC71" WidthRequest="40" VerticalOptions="End" HeightRequest="{Binding BarHighHeight}" CornerRadius="5"/>
-                                    <Label Text="High" Grid.Column="2" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0"/>
-                                    <Label Grid.Column="2" Grid.Row="2" Text="{Binding CountHigh}" TextColor="Gray" HorizontalOptions="Center" 
-                                           FontSize="10"/>
+                                    <Label Text="Normal" Grid.Column="1" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0" FontFamily="ComfortaaRegular"/>
+                                    <Label Grid.Column="1" Grid.Row="2" Text="{Binding CountNormal}" TextColor="Gray" HorizontalOptions="Center" FontSize="10" FontFamily="ComfortaaRegular"/>
+
+                                    <Label Text="High" Grid.Column="2" Grid.Row="1" TextColor="White" HorizontalOptions="Center" FontSize="12" Margin="0,5,0,0" FontFamily="ComfortaaRegular"/>
+                                    <Label Grid.Column="2" Grid.Row="2" Text="{Binding CountHigh}" TextColor="Gray" HorizontalOptions="Center"
+                                           FontSize="10" FontFamily="ComfortaaRegular"/>
                                 </Grid>
                             </VerticalStackLayout>
                         </Border>
 
                         <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="10">
-                            <Label Text="HISTORY" TextColor="{StaticResource TextOrange}" FontAttributes="Bold" Margin="0,20,0,0"/>
+                            <Label Text="HISTORY" TextColor="{StaticResource TextOrange}" FontAttributes="Bold" Margin="0,20,0,0" FontFamily="ComfortaaRegular"/>
 
                             <CollectionView ItemsSource="{Binding History}" HeightRequest="300">
                                 <CollectionView.ItemTemplate>
@@ -78,20 +82,21 @@
                                         <Border StrokeShape="RoundRectangle 10" BackgroundColor="#20FFFFFF" StrokeThickness="0" Padding="15" Margin="0,0,0,10">
 
                                             <Grid ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
-                                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding TestType}" TextColor="White" FontAttributes="Bold"/>
-                                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding DateTaken, StringFormat='{0:MM/dd}'}" TextColor="LightGray" FontSize="12" HorizontalOptions="End" Margin="0,0,10,0"/>
+                                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding TestType}" TextColor="White" FontAttributes="Bold" FontFamily="ComfortaaRegular"/>
+                                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding DateTaken, StringFormat='{0:MM/dd}'}" TextColor="LightGray" FontSize="12" HorizontalOptions="End" Margin="0,0,10,0" FontFamily="ComfortaaRegular"/>
 
-                                                <Label Grid.Row="1" 
-                                                       Grid.Column="0" Text="{Binding CalculatedResult}" TextColor="Cyan" FontSize="13" Margin="0,5,0,0"/>
-                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalScore, StringFormat='Score: {0}'}" TextColor="White" FontSize="13" HorizontalOptions="End" Margin="0,5,10,0"/>
+                                                <Label Grid.Row="1"
+                                                       Grid.Column="0" Text="{Binding CalculatedResult}" TextColor="Cyan" FontSize="13" Margin="0,5,0,0" FontFamily="ComfortaaRegular"/>
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalScore, StringFormat='Score: {0}'}" TextColor="White" FontSize="13" HorizontalOptions="End" Margin="0,5,10,0" FontFamily="ComfortaaRegular"/>
 
 
                                                 <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" 
                                                         Text="View" 
                                                         TextColor="White" 
                                                         BackgroundColor="#6495ED" 
-                                                        FontSize="12" 
-                                                        HeightRequest="35" 
+                                                        FontSize="12"
+                                                        FontFamily="ComfortaaRegular"
+                                                        HeightRequest="35"
                                                         CornerRadius="8"
                                                         Padding="10,0"
                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AnalyticViewModel}}, Path=ViewHistoryDetailCommand}"

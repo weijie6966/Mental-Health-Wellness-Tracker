@@ -17,6 +17,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         private readonly IAssessmentRepository _repository = new AssessmentRepository();
         private string _currentUserId;
         private bool _isLoading;
+        private bool _hasLoaded;
 
         // Collection to bind to the CollectionView
         public ObservableCollection<Post> Posts { get; } = new ObservableCollection<Post>();
@@ -25,6 +26,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         {
             if (newEntry != null)
             {
+                if (newEntry.DateCreated == default)
+                {
+                    newEntry.DateCreated = DateTime.Now;
+                }
+
                 newEntry.IsOwner = IsPostMine(newEntry);
                 // Add the new post to the bindable collection at the top
                 Posts.Insert(0, newEntry);
@@ -72,12 +78,18 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         }
 
         // FIX: LoadPosts now handles mapping from CloudDiaryEntry to Post
-        public async Task LoadPosts()
+        public async Task LoadPosts(bool forceReload = false)
         {
             if (_repository == null || _isLoading) return;
 
+            if (_hasLoaded && !forceReload) return;
+
             _isLoading = true;
-            Posts.Clear();
+
+            if (forceReload || !_hasLoaded)
+            {
+                Posts.Clear();
+            }
 
             try
             {
@@ -91,6 +103,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
                             UserId = diary.UserId,
                             Username = string.IsNullOrEmpty(diary.Username) ? "Unknown" : diary.Username,
                             Content = diary.Content,
+                            DateCreated = diary.DateCreated,
                             MoodEmoji = string.IsNullOrEmpty(diary.MoodEmoji) ? "emoji_neutral.png" : diary.MoodEmoji,
                             UserProfileImage = string.IsNullOrWhiteSpace(diary.ProfileImagePath) ? "nav_profile.png" : diary.ProfileImagePath
                         };
@@ -104,6 +117,8 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
                     Posts.Add(post);
                 }
+
+                _hasLoaded = true;
             }
             catch (Exception ex)
             {

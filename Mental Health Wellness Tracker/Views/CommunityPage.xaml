@@ -86,11 +86,11 @@
                                         <CarouselView.ItemTemplate>
                                             <DataTemplate>
 
-                                                <Image Source="{Binding .}" 
-                                                       Aspect="AspectFit" 
-                            
-                                                       HorizontalOptions="Fill" 
-                                                       VerticalOptions="Center"/>
+                                                <Image Source="{Binding .}"
+                                                       Aspect="AspectFit"
+
+                                                       HorizontalOptions="Fill"
+                                                       VerticalOptions="Center" />
 
                                             </DataTemplate>
                                         </CarouselView.ItemTemplate>

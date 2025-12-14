@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Hosting;
+using Plugin.LocalNotification;
+using Mental_Health_Wellness_Tracker.Services;
 
 public static class MauiProgram
 {
@@ -8,6 +10,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<Mental_Health_Wellness_Tracker.App>()
+            .UseLocalNotification()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -19,6 +22,8 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+
+        builder.Services.AddSingleton<NotificationService>();
 
         return builder.Build();
     }

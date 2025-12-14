@@ -124,8 +124,8 @@
 
         <Border Grid.Row="1" BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 30,30,0,0" Padding="10,0">
             <Grid ColumnDefinitions="*,*,*,*,*">
-                <Button Grid.Column="0" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
-                <Button Grid.Column="1" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="0" ImageSource="nav_community.png" Command="{Binding NavigateCommand}" CommandParameter="Community" AutomationId="Community" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
+                <Button Grid.Column="1" ImageSource="nav_list.png" Command="{Binding NavigateCommand}" CommandParameter="List" AutomationId="List" BackgroundColor="{StaticResource ActiveNavColor}" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 <Button Grid.Column="2" ImageSource="nav_diary.png" Command="{Binding NavigateCommand}" CommandParameter="Diary" AutomationId="Diary" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 <Button Grid.Column="3" ImageSource="nav_graph.png" Command="{Binding NavigateCommand}" CommandParameter="Stats" AutomationId="Stats" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>
                 <Button Grid.Column="4" ImageSource="nav_profile.png" Command="{Binding NavigateCommand}" CommandParameter="Profile" AutomationId="Profile" BackgroundColor="Transparent" CornerRadius="25" HeightRequest="55" WidthRequest="55" Padding="10"/>

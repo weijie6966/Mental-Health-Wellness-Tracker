@@ -49,9 +49,14 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private async Task OnLoginClicked()
         {
+            if (IsBusy) return;
+
+            IsBusy = true;
+
             if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
             {
                 await Application.Current.MainPage.DisplayAlert("Error", "Please enter both email and password.", "OK");
+                IsBusy = false;
                 return;
             }
 
@@ -73,6 +78,10 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             catch (Exception ex)
             {
                 await Application.Current.MainPage.DisplayAlert("Login Failed", $"Error: {ex.Message}", "Try Again");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

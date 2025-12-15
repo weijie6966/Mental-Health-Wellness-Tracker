@@ -16,7 +16,6 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
     {
         private readonly IAssessmentRepository _repository = new AssessmentRepository();
         private string _currentUserId;
-        private bool _isLoading;
         private bool _hasLoaded;
 
         // Collection to bind to the CollectionView
@@ -80,11 +79,11 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
         // FIX: LoadPosts now handles mapping from CloudDiaryEntry to Post
         public async Task LoadPosts(bool forceReload = false)
         {
-            if (_repository == null || _isLoading) return;
+            if (_repository == null || IsBusy) return;
 
             if (_hasLoaded && !forceReload) return;
 
-            _isLoading = true;
+            IsBusy = true;
 
             if (forceReload || !_hasLoaded)
             {
@@ -126,7 +125,7 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
             finally
             {
-                _isLoading = false;
+                IsBusy = false;
             }
 
             OnPropertyChanged(nameof(Posts));

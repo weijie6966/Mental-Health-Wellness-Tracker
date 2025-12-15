@@ -64,75 +64,97 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         public async Task LoadProfileData() // FIX 2: Load from repository
         {
-            string userId = await SecureStorage.GetAsync("user_id");
-            if (string.IsNullOrEmpty(userId)) return;
+            if (IsBusy) return;
 
-            // Fetch data from repository
-            var profile = await _repository.GetUserProfileAsync(userId);
-
-            if (profile != null)
+            try
             {
-                _userProfile = profile;
+                IsBusy = true;
 
-                // Update local preference cache (for compatibility with WriteDiaryViewModel)
-                Preferences.Set("UsernameKey", profile.Username);
+                string userId = await SecureStorage.GetAsync("user_id");
+                if (string.IsNullOrEmpty(userId)) return;
 
-                // Trigger UI update for bound properties
-                OnPropertyChanged(nameof(Username));
-                OnPropertyChanged(nameof(Bio));
+                // Fetch data from repository
+                var profile = await _repository.GetUserProfileAsync(userId);
 
-                // Load and set avatar source
-                if (!string.IsNullOrEmpty(_userProfile.ProfileImagePath))
+                if (profile != null)
                 {
-                    if (Uri.TryCreate(_userProfile.ProfileImagePath, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                    _userProfile = profile;
+
+                    // Update local preference cache (for compatibility with WriteDiaryViewModel)
+                    Preferences.Set("UsernameKey", profile.Username);
+
+                    // Trigger UI update for bound properties
+                    OnPropertyChanged(nameof(Username));
+                    OnPropertyChanged(nameof(Bio));
+
+                    // Load and set avatar source
+                    if (!string.IsNullOrEmpty(_userProfile.ProfileImagePath))
                     {
-                        ProfileAvatarSource = ImageSource.FromUri(uri);
-                    }
-                    else if (File.Exists(_userProfile.ProfileImagePath))
-                    {
-                        ProfileAvatarSource = ImageSource.FromFile(_userProfile.ProfileImagePath);
+                        if (Uri.TryCreate(_userProfile.ProfileImagePath, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                        {
+                            ProfileAvatarSource = ImageSource.FromUri(uri);
+                        }
+                        else if (File.Exists(_userProfile.ProfileImagePath))
+                        {
+                            ProfileAvatarSource = ImageSource.FromFile(_userProfile.ProfileImagePath);
+                        }
+                        else
+                        {
+                            ProfileAvatarSource = "nav_profile.png";
+                        }
                     }
                     else
                     {
                         ProfileAvatarSource = "nav_profile.png";
                     }
+                    OnPropertyChanged(nameof(ProfileAvatarSource));
                 }
                 else
                 {
-                    ProfileAvatarSource = "nav_profile.png";
+                    _userProfile = new UserProfile { UserId = userId };
                 }
-                OnPropertyChanged(nameof(ProfileAvatarSource));
             }
-            else
+            finally
             {
-                _userProfile = new UserProfile { UserId = userId };
+                IsBusy = false;
             }
         }
 
         private async Task OnSaveProfileClicked() // FIX 3: Save to repository
         {
-            // The properties (Username, Bio) are already updated via the setters,
-            // so we just need to update the remaining model fields and persist.
-            var userId = await SecureStorage.GetAsync("user_id");
-            if (string.IsNullOrEmpty(userId))
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "You need to sign in before saving a profile.", "OK");
-                return;
-            }
+            if (IsBusy) return;
 
-            _userProfile.UserId = userId;
-            _userProfile.LastUpdated = DateTime.Now;
+            IsBusy = true;
 
-            bool success = await _repository.SaveUserProfileAsync(_userProfile);
-            if (success)
+            try
             {
-                // Update local preference cache (for compatibility with WriteDiaryViewModel)
-                Preferences.Set("UsernameKey", _userProfile.Username);
-                await Application.Current.MainPage.DisplayAlert("Success", "Profile updated successfully!", "OK");
+                // The properties (Username, Bio) are already updated via the setters,
+                // so we just need to update the remaining model fields and persist.
+                var userId = await SecureStorage.GetAsync("user_id");
+                if (string.IsNullOrEmpty(userId))
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", "You need to sign in before saving a profile.", "OK");
+                    return;
+                }
+
+                _userProfile.UserId = userId;
+                _userProfile.LastUpdated = DateTime.Now;
+
+                bool success = await _repository.SaveUserProfileAsync(_userProfile);
+                if (success)
+                {
+                    // Update local preference cache (for compatibility with WriteDiaryViewModel)
+                    Preferences.Set("UsernameKey", _userProfile.Username);
+                    await Application.Current.MainPage.DisplayAlert("Success", "Profile updated successfully!", "OK");
+                }
+                else
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", "Failed to update profile.", "OK");
+                }
             }
-            else
+            finally
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Failed to update profile.", "OK");
+                IsBusy = false;
             }
         }
 

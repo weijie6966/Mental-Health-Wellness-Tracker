@@ -27,11 +27,16 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private async Task OnSendVerificationClicked()
         {
+            if (IsBusy) return;
+
+            IsBusy = true;
+
             string inputEmail = Email?.Trim();
 
             if (string.IsNullOrWhiteSpace(inputEmail))
             {
                 await Application.Current.MainPage.DisplayAlert("Error", "Please enter your email address.", "OK");
+                IsBusy = false;
                 return;
             }
 
@@ -43,6 +48,10 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             catch (Exception ex)
             {
                 await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
     }

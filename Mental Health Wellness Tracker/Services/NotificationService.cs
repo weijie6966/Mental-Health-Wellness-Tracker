@@ -1,3 +1,4 @@
+using Microsoft.Maui.Controls;
 using Plugin.LocalNotification;
 
 namespace Mental_Health_Wellness_Tracker.Services
@@ -16,10 +17,35 @@ namespace Mental_Health_Wellness_Tracker.Services
             // Request permission only if not already granted, then configure the recurring reminders.
             if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
             {
-                await LocalNotificationCenter.Current.RequestNotificationPermission();
+                var userConsented = await AskForPermissionAsync();
+
+                if (userConsented)
+                {
+                    await LocalNotificationCenter.Current.RequestNotificationPermission();
+                }
+                else
+                {
+                    return;
+                }
             }
 
             ScheduleDailyNotifications();
+        }
+
+        private async Task<bool> AskForPermissionAsync()
+        {
+            var mainPage = Application.Current?.MainPage;
+
+            if (mainPage == null)
+            {
+                return false;
+            }
+
+            return await mainPage.DisplayAlert(
+                "Enable reminders?",
+                "Allow daily notifications so we can remind you to check in with yourself during the day.",
+                "Allow",
+                "Not now");
         }
 
         private void ScheduleDailyNotifications()

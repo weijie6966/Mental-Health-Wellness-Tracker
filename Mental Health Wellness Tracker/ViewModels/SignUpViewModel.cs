@@ -52,9 +52,14 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private async Task OnSignUpClicked()
         {
+            if (IsBusy) return;
+
+            IsBusy = true;
+
             if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password) || string.IsNullOrEmpty(ConfirmPassword))
             {
                 await Application.Current.MainPage.DisplayAlert("Error", "Please fill in all fields.", "OK");
+                IsBusy = false;
                 return;
             }
 
@@ -88,6 +93,10 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             {
                 // Display error message provided by the AuthService (e.g., Email already in use)
                 await Application.Current.MainPage.DisplayAlert("Registration Failed", ex.Message, "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

@@ -132,5 +132,17 @@
             </Grid>
         </Border>
 
+        <Grid BackgroundColor="#80000000"
+              IsVisible="{Binding IsBusy}"
+              InputTransparent="False">
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                 IsVisible="{Binding IsBusy}"
+                                 Color="White"
+                                 WidthRequest="60"
+                                 HeightRequest="60"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"/>
+        </Grid>
+
     </Grid>
 </ContentPage>

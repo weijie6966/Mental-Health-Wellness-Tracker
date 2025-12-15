@@ -54,29 +54,40 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private async Task LoadQuestionsAsync()
         {
-            Questions.Clear();
+            if (IsBusy) return;
 
-            var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(ActiveTestType);
-
-            if (fetched != null && fetched.Count > 0)
+            try
             {
-                foreach (var q in fetched)
+                IsBusy = true;
+
+                Questions.Clear();
+
+                var fetched = await _assessmentRepository.GetQuestionsByTestTypeAsync(ActiveTestType);
+
+                if (fetched != null && fetched.Count > 0)
                 {
-                    q.SelectedScore = null;
-                    Questions.Add(q);
+                    foreach (var q in fetched)
+                    {
+                        q.SelectedScore = null;
+                        Questions.Add(q);
+                    }
                 }
-            }
-            else
-            {
-                // Fallback to a minimal built-in set if the repository is empty
-                Questions.Add(new AssessmentQuestion { Id = 1, QuestionText = "I have been feeling down, depressed, or hopeless." });
-                Questions.Add(new AssessmentQuestion { Id = 2, QuestionText = "I have had little interest or pleasure in doing things." });
-                Questions.Add(new AssessmentQuestion { Id = 3, QuestionText = "I have had trouble falling or staying asleep, or sleeping too much." });
-                Questions.Add(new AssessmentQuestion { Id = 4, QuestionText = "I have been feeling tired or having little energy." });
-                Questions.Add(new AssessmentQuestion { Id = 5, QuestionText = "I have had poor appetite or overeating." });
-            }
+                else
+                {
+                    // Fallback to a minimal built-in set if the repository is empty
+                    Questions.Add(new AssessmentQuestion { Id = 1, QuestionText = "I have been feeling down, depressed, or hopeless." });
+                    Questions.Add(new AssessmentQuestion { Id = 2, QuestionText = "I have had little interest or pleasure in doing things." });
+                    Questions.Add(new AssessmentQuestion { Id = 3, QuestionText = "I have had trouble falling or staying asleep, or sleeping too much." });
+                    Questions.Add(new AssessmentQuestion { Id = 4, QuestionText = "I have been feeling tired or having little energy." });
+                    Questions.Add(new AssessmentQuestion { Id = 5, QuestionText = "I have had poor appetite or overeating." });
+                }
 
-            CurrentQuestionIndex = 0;
+                CurrentQuestionIndex = 0;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         private void SelectOption(object parameter)
@@ -139,12 +150,16 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
 
         private async Task SubmitAssessment()
         {
+            if (IsBusy) return;
+
             if (!CanSubmit()) return;
 
             int totalScore = Questions.Sum(CalculateScore);
 
             try
             {
+                IsBusy = true;
+
                 string userId = await SecureStorage.GetAsync("user_id");
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -175,10 +190,13 @@ namespace Mental_Health_Wellness_Tracker.ViewModels
             }
             catch (Exception ex)
             {
-                await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Error", $"Failed to submit assessment: {ex.Message}", "OK");
+                await Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Error", $"Failed to submit assessment:{ex.Message}", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
-
         // FIX: Method name changed to match the property name
         private string GetCalculatedResult(int score)
         {

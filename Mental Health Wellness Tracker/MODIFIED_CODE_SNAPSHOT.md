@@ -2867,10 +2867,10 @@ namespace Mental_Health_Wellness_Tracker.Views
 {
     public partial class MainPage : ContentPage
     {
-        public MainPage()
+        public MainPage(NotificationService notificationService)
         {
             InitializeComponent();
-            BindingContext = new MainViewModel();
+            BindingContext = new MainViewModel(notificationService);
         }
     }
 }

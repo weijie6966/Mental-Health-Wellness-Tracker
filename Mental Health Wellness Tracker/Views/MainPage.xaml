@@ -85,7 +85,7 @@
                             <Image Grid.Column="1" Source="google_icon.png" HeightRequest="24" WidthRequest="24"/>
                         </Grid>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SocialLoginCommand}" CommandParameter="Google"/>
+                            <TapGestureRecognizer Command="{Binding UnimplementedCommand}" CommandParameter="Google"/>
                         </Border.GestureRecognizers>
                     </Border>
 
@@ -95,7 +95,7 @@
                             <Image Grid.Column="1" Source="fb_icon.png" HeightRequest="24" WidthRequest="24"/>
                         </Grid>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SocialLoginCommand}" CommandParameter="Facebook"/>
+                            <TapGestureRecognizer Command="{Binding UnimplementedCommand}" CommandParameter="Facebook"/>
                         </Border.GestureRecognizers>
                     </Border>
 
@@ -105,7 +105,7 @@
                             <Image Grid.Column="1" Source="apple_icon.png" HeightRequest="24" WidthRequest="24"/>
                         </Grid>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SocialLoginCommand}" CommandParameter="Apple"/>
+                            <TapGestureRecognizer Command="{Binding UnimplementedCommand}" CommandParameter="Apple"/>
                         </Border.GestureRecognizers>
                     </Border>
 

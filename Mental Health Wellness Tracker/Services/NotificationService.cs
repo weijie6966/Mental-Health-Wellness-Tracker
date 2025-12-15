@@ -13,7 +13,12 @@ namespace Mental_Health_Wellness_Tracker.Services
 
         public async Task InitializeAsync()
         {
-            await NotificationCenter.Current.RequestNotificationPermission();
+            // Request permission only if not already granted, then configure the recurring reminders.
+            if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
+            {
+                await LocalNotificationCenter.Current.RequestNotificationPermission();
+            }
+
             ScheduleDailyNotifications();
         }
 
@@ -21,7 +26,7 @@ namespace Mental_Health_Wellness_Tracker.Services
         {
             foreach (var slot in _dailySlots)
             {
-                NotificationCenter.Current.Cancel(slot.Id);
+                LocalNotificationCenter.Current.Cancel(slot.Id);
 
                 var notifyTime = DateTime.Today.Add(slot.TimeOfDay);
                 if (notifyTime <= DateTime.Now)
@@ -41,7 +46,7 @@ namespace Mental_Health_Wellness_Tracker.Services
                     }
                 };
 
-                NotificationCenter.Current.Show(request);
+                LocalNotificationCenter.Current.Show(request);
             }
         }
     }

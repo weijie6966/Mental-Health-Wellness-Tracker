@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\User\\Source\\Repos\\mice14\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj": {}
+    "C:\\Users\\User\\Source\\Repos\\mice16\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj": {}
   },
   "projects": {
-    "C:\\Users\\User\\Source\\Repos\\mice14\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj": {
+    "C:\\Users\\User\\Source\\Repos\\mice16\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\User\\Source\\Repos\\mice14\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj",
+        "projectUniqueName": "C:\\Users\\User\\Source\\Repos\\mice16\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj",
         "projectName": "Mental Health Wellness Tracker",
-        "projectPath": "C:\\Users\\User\\Source\\Repos\\mice14\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj",
+        "projectPath": "C:\\Users\\User\\Source\\Repos\\mice16\\Mental Health Wellness Tracker\\Mental Health Wellness Tracker.csproj",
         "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\User\\Source\\Repos\\mice14\\Mental Health Wellness Tracker\\obj\\",
+        "outputPath": "C:\\Users\\User\\Source\\Repos\\mice16\\Mental Health Wellness Tracker\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -22,7 +22,7 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net8.0-android"
+          "net9.0-android"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -30,8 +30,8 @@
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0-android34.0": {
-            "targetAlias": "net8.0-android",
+          "net9.0-android35.0": {
+            "targetAlias": "net9.0-android",
             "projectReferences": {}
           }
         },
@@ -48,8 +48,8 @@
         "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net8.0-android34.0": {
-          "targetAlias": "net8.0-android",
+        "net9.0-android35.0": {
+          "targetAlias": "net9.0-android",
           "dependencies": {
             "FirebaseAuthentication.net": {
               "target": "Package",
@@ -71,20 +71,20 @@
             },
             "Microsoft.Extensions.Logging.Debug": {
               "target": "Package",
-              "version": "[8.0.1, )"
+              "version": "[9.0.0, )"
             },
             "Microsoft.Maui.Controls": {
               "target": "Package",
-              "version": "[8.0.100, )"
+              "version": "[9.0.111, )"
             },
             "Microsoft.Maui.Controls.Compatibility": {
               "target": "Package",
-              "version": "[8.0.100, )"
+              "version": "[9.0.111, )"
             },
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.22, )",
+              "version": "[9.0.11, )",
               "autoReferenced": true
             },
             "Plugin.LocalNotification": {
@@ -119,28 +119,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.Android.Ref.34",
-              "version": "[34.0.154, 34.0.154]"
-            },
-            {
-              "name": "Microsoft.Android.Runtime.34.android-arm",
-              "version": "[34.0.154, 34.0.154]"
-            },
-            {
-              "name": "Microsoft.Android.Runtime.34.android-arm64",
-              "version": "[34.0.154, 34.0.154]"
-            },
-            {
-              "name": "Microsoft.Android.Runtime.34.android-x64",
-              "version": "[34.0.154, 34.0.154]"
-            },
-            {
-              "name": "Microsoft.Android.Runtime.34.android-x86",
-              "version": "[34.0.154, 34.0.154]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.Android": {
               "privateAssets": "all"
@@ -153,16 +131,10 @@
         }
       },
       "runtimes": {
-        "android-arm": {
-          "#import": []
-        },
         "android-arm64": {
           "#import": []
         },
         "android-x64": {
-          "#import": []
-        },
-        "android-x86": {
           "#import": []
         }
       }

@@ -14,6 +14,16 @@ namespace Mental_Health_Wellness_Tracker.Models
             {
                 OnPropertyChanged(nameof(PostImages));
                 OnPropertyChanged(nameof(HasImages));
+
+                // Ensure the carousel always has a valid position when images are present
+                if (PostImages.Count == 0)
+                {
+                    SelectedImageIndex = -1;
+                }
+                else if (SelectedImageIndex < 0 || SelectedImageIndex >= PostImages.Count)
+                {
+                    SelectedImageIndex = 0;
+                }
             };
         }
 
@@ -48,6 +58,22 @@ namespace Mental_Health_Wellness_Tracker.Models
                 if (_isOwner != value)
                 {
                     _isOwner = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private int _selectedImageIndex = -1;
+        public int SelectedImageIndex
+        {
+            get => _selectedImageIndex;
+            set
+            {
+                var clampedValue = PostImages.Count == 0 ? -1 : Math.Min(Math.Max(value, 0), PostImages.Count - 1);
+
+                if (_selectedImageIndex != clampedValue)
+                {
+                    _selectedImageIndex = clampedValue;
                     OnPropertyChanged();
                 }
             }
